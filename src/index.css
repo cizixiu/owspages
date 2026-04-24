@@ -1,0 +1,326 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;800;900&family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&family=Cormorant+Garamond:wght@700&family=Abril+Fatface&family=Satisfy&family=Space+Grotesk:wght@700&family=Outfit:wght@800&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=ZCOOL+XiaoWei&family=ZCOOL+QingKe+HuangYou&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Noto Serif SC", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Georgia", "Times New Roman", "Noto Serif SC", serif;
+  --font-display: "Playfair Display", "Noto Serif SC", serif;
+  --font-chinese: "Noto Serif SC", serif;
+  
+  /* Date Specific Fonts */
+  --font-date-playfair: "Playfair Display", serif;
+  --font-date-bebas: "Bebas Neue", sans-serif;
+  --font-date-cormorant: "Cormorant Garamond", serif;
+  --font-date-abril: "Abril Fatface", serif;
+  --font-date-mono: "JetBrains Mono", monospace;
+  --font-date-satisfy: "Satisfy", cursive;
+  --font-date-space: "Space Grotesk", sans-serif;
+  --font-date-outfit: "Outfit", sans-serif;
+
+  /* Quote Specific Fonts */
+  --font-quote-serif: "Noto Serif SC", serif;
+  --font-quote-sans: "Noto Sans SC", sans-serif;
+  --font-quote-kaiti: "Kaiti", "STKaiti", "Noto Serif SC", serif;
+  --font-quote-calligraphy: "Ma Shan Zheng", cursive;
+  --font-quote-handwrite: "Zhi Mang Xing", cursive;
+  --font-quote-display: "ZCOOL XiaoWei", serif;
+  --font-quote-modern: "ZCOOL QingKe HuangYou", cursive;
+  --font-quote-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  @apply font-sans antialiased transition-colors duration-500 overflow-x-hidden;
+}
+
+.writing-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* --- Theme: Bold (Haus) --- */
+.theme-bold {
+  --bg-page: #E5E5E1;
+  --bg-card: #FDFDFB;
+  --color-text: #1A1A1A;
+  --color-muted: #666;
+  --border-card: #DCDCDC;
+  --border-accent: #1A1A1A;
+  --font-main: var(--font-serif);
+}
+
+/* --- Theme: Classic --- */
+.theme-classic {
+  --bg-page: #F5F3F0;
+  --bg-card: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-muted: #888;
+  --border-card: rgba(0,0,0,0.08);
+  --border-accent: #1A1A1A;
+  --font-main: var(--font-chinese);
+}
+
+/* --- Theme: Dark --- */
+.theme-dark {
+  --bg-page: #121212;
+  --bg-card: #1E1E1E;
+  --color-text: #E0E0E0;
+  --color-muted: #AAAAAA;
+  --border-card: #333;
+  --border-accent: #E0E0E0;
+  --font-main: var(--font-serif);
+}
+
+/* --- Theme: Warm --- */
+.theme-warm {
+  --bg-page: #EDE0D4;
+  --bg-card: #F5EBE0;
+  --color-text: #4E342E;
+  --color-muted: #8D6E63;
+  --border-card: #D7CCC8;
+  --border-accent: #5D4037;
+  --font-main: var(--font-serif);
+}
+
+/* --- Theme: Technical (Blueprint) --- */
+.theme-technical {
+  --bg-page: #0A192F;
+  --bg-card: #112240;
+  --color-text: #64FFDA;
+  --color-muted: #A8B2D1;
+  --border-card: #233554;
+  --border-accent: #64FFDA;
+  --font-main: "JetBrains Mono", monospace;
+}
+
+/* --- Theme: Poster (Avant-garde) --- */
+.theme-poster {
+  --bg-page: #1A1A1A;
+  --bg-card: #FFFFFF;
+  --color-text: #000000;
+  --color-muted: #999;
+  --border-card: transparent;
+  --border-accent: #C41E3A;
+  --font-main: var(--font-sans);
+}
+
+/* --- Theme: Traditional (Heritage) --- */
+.theme-traditional {
+  --bg-page: #F4EBE2;
+  --bg-card: #FDFBF7;
+  --color-text: #2A0E08;
+  --color-muted: #8E7162;
+  --border-card: #EADBC8;
+  --border-accent: #B03A2E;
+  --font-main: var(--font-chinese);
+}
+
+/* Editorial Theme */
+.theme-editorial {
+  --bg-page: #F8F8F8;
+  --bg-card: #FFFFFF;
+  --color-text: #000000;
+  --color-muted: #999999;
+  --border-card: #EEEEEE;
+  --border-accent: #000000;
+}
+.theme-editorial .month-box {
+  @apply border-b-2 border-t-0 border-l-0 border-r-0 px-0 mb-4 md:mb-8 italic font-serif lowercase text-3xl tracking-tighter;
+}
+.theme-editorial .bottom-section {
+  @apply border-t border-current/40 pt-4 md:pt-10;
+}
+
+/* Vintage Theme */
+.theme-vintage {
+  --bg-page: #E76F51;
+  --bg-card: #F4A261;
+  --color-text: #264653;
+  --color-muted: #0a0a0a;
+  --border-card: #264653;
+  --border-accent: #E76F51;
+}
+.theme-vintage .calendar-container {
+  @apply rounded-[40px] border-[6px];
+}
+.theme-vintage .month-box {
+  @apply bg-[#264653] text-[#F4A261] rounded-full px-6 py-2 border-none;
+}
+.theme-vintage #footer-main {
+  @apply border-[var(--border-accent)] opacity-100;
+}
+.theme-vintage #brand, .theme-vintage #footer-day-year div {
+  @apply opacity-100 text-[#000000];
+}
+
+/* Zen Theme */
+.theme-zen {
+  --bg-page: #DCEDC8;
+  --bg-card: #F1F8E9;
+  --color-text: #33691E;
+  --color-muted: #689F38;
+  --border-card: #C5E1A5;
+  --border-accent: #8BC34A;
+}
+.theme-zen .calendar-container {
+  @apply border-x-0 border-y-2;
+}
+.theme-zen .month-box {
+  @apply border-none font-light tracking-[8px] text-[#8BC34A];
+}
+
+/* Crimson Theme */
+.theme-crimson {
+  --bg-page: #F5F5F0;
+  --bg-card: #FFFFFF;
+  --color-text: #800020;
+  --color-muted: #A0522D;
+  --border-card: #DCDCDC;
+  --border-accent: #800020;
+}
+.theme-crimson .calendar-container {
+  @apply border-none shadow-[0_30px_60px_rgba(128,0,32,0.15)];
+}
+.theme-crimson .month-box {
+  @apply w-16 h-16 flex items-center justify-center rounded-full bg-[#800020] text-white border-none p-0 text-xl font-bold;
+}
+.theme-crimson .date-number {
+  @apply border-[4px] border-[#800020] rounded-full w-[1.4em] h-[1.4em] flex items-center justify-center mx-auto leading-none pt-[0.1em];
+  font-weight: 900;
+}
+.theme-crimson .date-section {
+  @apply flex items-center justify-center flex-1 my-0;
+}
+.theme-crimson .bottom-section {
+  @apply mt-2 md:mt-4;
+}
+.theme-crimson .quote-text {
+  @apply text-[#800020] font-black italic;
+}
+
+.calendar-container {
+  background-color: var(--bg-card);
+  color: var(--color-text);
+  border-color: var(--border-card);
+  font-family: var(--font-main);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* padding is handled by tailwind classes in App.tsx */
+}
+
+.theme-technical .calendar-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--border-card) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-card) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.month-box {
+  border-color: var(--border-accent);
+  @apply border-2 px-3 py-1 font-black text-lg tracking-[2px] uppercase transition-all duration-500 whitespace-nowrap flex-shrink-0;
+}
+
+.theme-classic .month-box {
+  @apply rounded-full border border-black font-medium text-sm normal-case;
+}
+
+.theme-poster .month-box {
+  @apply border-l-4 md:border-l-8 border-t-0 border-r-0 border-b-0 px-3 md:px-4 py-0 rounded-none text-base md:text-lg;
+}
+
+.theme-technical .month-box {
+  @apply border-dashed border-[1px] rounded-none lowercase;
+}
+
+.date-number {
+  font-family: var(--dynamic-font, var(--font-serif));
+  @apply text-[140px] sm:text-[180px] md:text-[280px] leading-none select-none transition-all duration-500 my-2 md:my-0;
+}
+
+.theme-classic .date-number {
+  /* Remove specific font-family to let dynamic-font take over */
+}
+
+.theme-traditional .date-number {
+  @apply text-[140px] sm:text-[160px] md:text-[220px];
+}
+
+.theme-technical .date-number {
+  @apply text-[130px] sm:text-[160px] md:text-[220px] tracking-tighter;
+}
+
+.theme-poster .date-number {
+  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0 md:-right-12 md:-bottom-16 text-[270px] sm:text-[360px] md:text-[500px] opacity-[0.08] font-black italic tracking-tighter;
+  pointer-events: none;
+}
+
+.theme-poster .sidebar-right {
+  @apply border-r-0 pr-0 mt-[-10%] md:mt-[-20%]; /* Adjust lift height for mobile */
+}
+
+.sidebar {
+  @apply flex items-center justify-center text-[9px] md:text-[11px] tracking-[1px] md:tracking-[4px] h-fit whitespace-nowrap transition-all duration-500;
+  color: var(--color-muted);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.sidebar-left {
+  @apply border-l pl-2 md:pl-3 mr-2 md:mr-0;
+  border-color: var(--border-card);
+}
+
+.sidebar-right {
+  @apply border-r pr-2 md:pr-3 ml-2 md:ml-0;
+  border-color: var(--border-card);
+}
+
+.theme-traditional .sidebar {
+  @apply text-sm tracking-[8px];
+  border: none;
+}
+
+.bottom-section {
+  @apply border-t border-current/40 pt-2 md:pt-8 mt-2 md:mt-4 transition-all duration-500 relative z-10;
+}
+
+.quote-text {
+  @apply text-[13px] md:text-xl font-bold leading-relaxed transition-all duration-500;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.quote-meta {
+  @apply mt-2 opacity-60;
+}
+
+.theme-classic .bottom-section {
+  @apply border-t-0 p-0 m-0 flex flex-col items-center gap-4;
+}
+
+.theme-poster .bottom-section {
+  @apply border-t-0 mt-4 md:mt-0 pt-0 max-w-full md:max-w-[340px] self-start;
+}
+
+.theme-poster .quote-text {
+  @apply text-lg md:text-2xl font-black leading-[1.3] tracking-tight;
+}
+
+.theme-poster .quote-meta {
+  @apply mt-4 text-left border-l-4 border-red-600 pl-4 italic not-italic font-medium;
+}
+
+.theme-technical .bottom-section {
+  @apply border-t border-current/40 bg-black/10 p-6;
+}
+
+.festival-badge {
+  @apply absolute -top-8 right-0 bg-[#C00] text-white text-[10px] px-2 py-0.5 font-bold;
+}
+
+.theme-technical .festival-badge {
+  @apply bg-[#64FFDA] text-[#0A192F] opacity-100;
+}
