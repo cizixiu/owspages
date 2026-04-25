@@ -54,6 +54,18 @@ export default function App() {
     const savedFontSync = localStorage.getItem('calendar-font-sync') === 'true';
     setIsFontSync(savedFontSync);
 
+    const savedScheme = localStorage.getItem('calendar-scheme');
+    if (savedScheme) setScheme(savedScheme);
+
+    const savedBgId = localStorage.getItem('calendar-bg-id');
+    if (savedBgId) setBgId(savedBgId);
+
+    const savedShadow = localStorage.getItem('calendar-shadow');
+    if (savedShadow !== null) setHasShadow(savedShadow === 'true');
+
+    const savedRadius = localStorage.getItem('calendar-radius');
+    if (savedRadius) setBorderRadius(parseInt(savedRadius));
+
     const savedBorderWidth = localStorage.getItem('calendar-border-width');
     if (savedBorderWidth) setBorderWidth(parseInt(savedBorderWidth));
 
@@ -80,6 +92,36 @@ export default function App() {
     const nextState = !isFontSync;
     setIsFontSync(nextState);
     localStorage.setItem('calendar-font-sync', String(nextState));
+  };
+
+  const handleSchemeChange = (newScheme: string) => {
+    setScheme(newScheme);
+    localStorage.setItem('calendar-scheme', newScheme);
+  };
+
+  const handleBgChange = (newBg: string) => {
+    setBgId(newBg);
+    localStorage.setItem('calendar-bg-id', newBg);
+  };
+
+  const handleShadowChange = (newVal: boolean) => {
+    setHasShadow(newVal);
+    localStorage.setItem('calendar-shadow', String(newVal));
+  };
+
+  const handleRadiusChange = (newVal: number) => {
+    setBorderRadius(newVal);
+    localStorage.setItem('calendar-radius', String(newVal));
+  };
+
+  const handleBorderWidthChange = (newVal: number) => {
+    setBorderWidth(newVal);
+    localStorage.setItem('calendar-border-width', String(newVal));
+  };
+
+  const handleBorderColorChange = (newVal: string) => {
+    setBorderColor(newVal);
+    localStorage.setItem('calendar-border-color', newVal);
   };
 
   const calendarData = useMemo(() => {
@@ -534,7 +576,7 @@ export default function App() {
                       {colorSchemes.map((s) => (
                         <button
                           key={s.id}
-                          onClick={() => setScheme(s.id)}
+                          onClick={() => handleSchemeChange(s.id)}
                           className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                             scheme === s.id ? itemActiveClass : `${itemHoverClass}`
                           }`}
@@ -552,7 +594,7 @@ export default function App() {
                       {backgrounds.map((b) => (
                         <button
                           key={b.id}
-                          onClick={() => setBgId(b.id)}
+                          onClick={() => handleBgChange(b.id)}
                           className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                             bgId === b.id ? itemActiveClass : `${itemHoverClass}`
                           }`}
@@ -622,7 +664,7 @@ export default function App() {
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-medium opacity-60">卡片阴影</span>
                         <button 
-                          onClick={() => setHasShadow(!hasShadow)}
+                          onClick={() => handleShadowChange(!hasShadow)}
                           className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-blue-500' : 'bg-gray-400'}`}
                         >
                           <motion.div 
@@ -636,7 +678,7 @@ export default function App() {
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-medium opacity-60">圆角半径 ({borderRadius}px)</span>
                           <button 
-                            onClick={() => setBorderRadius(borderRadius === 0 ? 4 : 0)}
+                            onClick={() => handleRadiusChange(borderRadius === 0 ? 4 : 0)}
                             className={`text-[9px] px-2 py-0.5 rounded-md border transition-all ${borderRadius > 0 ? 'bg-blue-500/20 border-blue-500/30 text-blue-500' : 'border-gray-500/20 opacity-50'}`}
                           >
                             {borderRadius === 0 ? '直角' : '圆角'}
@@ -647,7 +689,7 @@ export default function App() {
                           min="0" 
                           max="60" 
                           value={borderRadius} 
-                          onChange={(e) => setBorderRadius(parseInt(e.target.value))}
+                          onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
                           className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
                         />
                       </div>
@@ -661,11 +703,7 @@ export default function App() {
                           min="0" 
                           max="10" 
                           value={borderWidth} 
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value);
-                            setBorderWidth(val);
-                            localStorage.setItem('calendar-border-width', String(val));
-                          }}
+                          onChange={(e) => handleBorderWidthChange(parseInt(e.target.value))}
                           className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
                         />
                       </div>
@@ -682,10 +720,7 @@ export default function App() {
                           {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B'].map(c => (
                             <button
                               key={c}
-                              onClick={() => {
-                                setBorderColor(c);
-                                localStorage.setItem('calendar-border-color', c);
-                              }}
+                              onClick={() => handleBorderColorChange(c)}
                               className={`w-5 h-5 rounded-md border-2 transition-all ${borderColor === c ? 'border-blue-500 scale-110' : 'border-transparent'}`}
                               style={{ backgroundColor: c }}
                             />
@@ -694,10 +729,7 @@ export default function App() {
                         <input 
                           type="color" 
                           value={borderColor} 
-                          onChange={(e) => {
-                            setBorderColor(e.target.value);
-                            localStorage.setItem('calendar-border-color', e.target.value);
-                          }}
+                          onChange={(e) => handleBorderColorChange(e.target.value)}
                           className="w-full h-8 p-0 rounded-md border-0 cursor-pointer bg-transparent"
                         />
                       </div>
