@@ -28,9 +28,13 @@ export default function App() {
   const [dateFont, setDateFont] = useState<DateFontType>('playfair');
   const [quoteFont, setQuoteFont] = useState<QuoteFontType>('serif');
   const [scheme, setScheme] = useState<string>('original');
+  const [bgId, setBgId] = useState<string>('default');
+  const [hasShadow, setHasShadow] = useState(true);
+  const [borderRadius, setBorderRadius] = useState(4);
   const [isFontSync, setIsFontSync] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'theme' | 'font' | 'quote' | 'scheme'>('theme');
+  const [activeTab, setActiveTab] = useState<'theme' | 'font' | 'quote' | 'scheme' | 'background' | 'setting'>('theme');
   const [randomSeed, setRandomSeed] = useState(0);
   const now = new Date();
 
@@ -251,15 +255,33 @@ export default function App() {
     },
   ];
 
+  const backgrounds = [
+    { id: 'default', name: '默认', color: 'transparent', preview: 'bg-white' },
+    { id: 'white', name: '纯白', color: '#FFFFFF', preview: 'bg-white shadow-inner border-gray-100' },
+    { id: 'paper', name: '故纸', color: '#FDFBF7', preview: 'bg-[#FDFBF7]' },
+    { id: 'cream', name: '杏黄', color: '#FFF9E1', preview: 'bg-[#FFF9E1]' },
+    { id: 'sage', name: '竹青', color: '#E8F0E8', preview: 'bg-[#E8F0E8]' },
+    { id: 'mist', name: '瓦青', color: '#F0F4F8', preview: 'bg-[#F0F4F8]' },
+    { id: 'rose', name: '藕粉', color: '#FDF0F0', preview: 'bg-[#FDF0F0]' },
+    { id: 'charcoal', name: '玄灰', color: '#2C2C2C', preview: 'bg-[#2C2C2C]' },
+    { id: 'midnight', name: '黛蓝', color: '#0F172A', preview: 'bg-[#0F172A]' },
+  ];
+
   const currentFontValue = fonts.find(f => f.id === dateFont)?.value || 'var(--font-serif)';
   const currentQuoteFontValue = quoteFonts.find(f => f.id === quoteFont)?.value || 'var(--font-quote-serif)';
   
   const isThemeDark = ['dark', 'technical'].includes(theme);
   const currentSchemeData = colorSchemes.find(s => s.id === scheme);
   const schemeStyles = currentSchemeData ? (isThemeDark ? currentSchemeData.dark : currentSchemeData.light) || {} : {};
+  
+  const currentBg = backgrounds.find(b => b.id === bgId);
+  const finalStyles = {
+    ...schemeStyles,
+    ...(currentBg && currentBg.id !== 'default' ? { '--bg-page': currentBg.color } : {})
+  };
 
   // Helper for dynamic button classes
-  const isDarkBg = ['dark', 'poster', 'technical'].includes(theme);
+  const isDarkBg = ['dark', 'poster', 'technical'].includes(theme) || bgId === 'charcoal' || bgId === 'midnight';
   const btnBaseClass = isDarkBg 
     ? 'bg-black/40 backdrop-blur-md text-white border-white/10 hover:bg-black/60' 
     : 'bg-white text-black border-gray-100 hover:bg-gray-50';
@@ -274,17 +296,18 @@ export default function App() {
   const itemActiveClass = isDarkBg ? 'bg-white text-black' : 'bg-black text-white';
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 md:p-8 pb-32 transition-colors duration-500 theme-${theme} scheme-${scheme}`} style={{ backgroundColor: 'var(--bg-page)', ...schemeStyles } as React.CSSProperties}>
+    <div className={`min-h-screen flex items-center justify-center p-4 md:p-8 pb-32 transition-colors duration-500 theme-${theme} scheme-${scheme}`} style={{ backgroundColor: 'var(--bg-page)', ...finalStyles } as React.CSSProperties}>
       <motion.main 
-        key={`${theme}-${dateFont}`}
+        key={`${theme}-${dateFont}-${bgId}`}
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="calendar-container w-full max-w-[540px] aspect-[3/4] border shadow-[0_40px_100px_rgba(0,0,0,0.12)] relative p-5 md:p-10 overflow-hidden select-none flex flex-col"
+        className={`calendar-container w-full max-w-[540px] aspect-[3/4] border relative p-5 md:p-10 overflow-hidden select-none flex flex-col transition-all duration-500 ${hasShadow ? 'shadow-[0_40px_100px_rgba(0,0,0,0.12)]' : 'shadow-none'}`}
         id="calendar-container"
         style={{ 
           '--dynamic-font': currentFontValue,
-          fontFamily: isFontSync ? currentQuoteFontValue : 'inherit'
+          fontFamily: isFontSync ? currentQuoteFontValue : 'inherit',
+          borderRadius: `${borderRadius}px`
         } as React.CSSProperties}
       >
         <header className="flex justify-between items-start mb-5" id="header">
@@ -348,73 +371,110 @@ export default function App() {
       </motion.main>
 
       {/* Floating Preference Switcher */}
-      <div className="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-50">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleDownload}
-          disabled={isDownloading}
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass} ${
-            isDownloading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          title="下载图片"
-        >
-          {isDownloading ? (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            >
-              <Download size={18} />
-            </motion.div>
-          ) : (
-            <Download size={20} />
-          )}
-        </motion.button>
+      <motion.div 
+        className="fixed right-0 top-1/2 -translate-y-1/2 flex items-center z-50 group"
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
+      >
+        {/* Trigger Handle - Subtle Vertical Line */}
+        <div className={`w-1.5 h-32 rounded-l-full cursor-pointer transition-all duration-300 ${isDarkBg ? 'bg-white/20 hover:bg-white/40' : 'bg-black/10 hover:bg-black/30'}`} />
 
-        {/* Random Quote Button */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ rotate: 180, scale: 0.95 }}
-          onClick={handleRandomQuote}
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
-          title="随机金句"
+        <motion.div 
+          variants={{
+            hidden: { x: '100%', opacity: 0 },
+            visible: { x: 0, opacity: 1 }
+          }}
+          initial="hidden"
+          animate={(isSidebarHovered || isSwitcherOpen) ? 'visible' : 'hidden'}
+          transition={{ type: 'spring', damping: 25, stiffness: 180 }}
+          className="flex flex-col items-end gap-4 p-4 pr-6"
         >
-          <RefreshCw size={20} />
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass} ${
+              isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            title="下载图片"
+          >
+            {isDownloading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              >
+                <Download size={18} />
+              </motion.div>
+            ) : (
+              <Download size={20} />
+            )}
+          </motion.button>
 
-        <AnimatePresence>
-          {isSwitcherOpen && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              className={`backdrop-blur-md p-2 rounded-3xl border shadow-xl flex flex-col gap-2 min-w-[160px] transition-colors duration-500 ${menuClass}`}
+          {/* Random Quote Button */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ rotate: 180, scale: 0.95 }}
+            onClick={handleRandomQuote}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
+            title="随机金句"
+          >
+            <RefreshCw size={20} />
+          </motion.button>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all ${mainBtnClass}`}
             >
+              {isSwitcherOpen ? <X size={20} /> : <Palette size={20} />}
+            </button>
+
+            <AnimatePresence>
+              {isSwitcherOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                  className={`fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-2 rounded-3xl border shadow-xl flex flex-col gap-2 min-w-[200px] transition-colors duration-500 ${menuClass}`}
+                >
               {/* Tabs */}
-              <div className={`grid grid-cols-4 rounded-2xl p-1 mb-1 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
+              <div className={`grid grid-cols-6 rounded-2xl p-1 mb-1 gap-0.5 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
                 <button 
                    onClick={() => setActiveTab('theme')}
-                   className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-50'}`}
+                   className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-40'}`}
                 >
-                  主题
+                  风格
                 </button>
                 <button 
                   onClick={() => setActiveTab('scheme')}
-                  className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'scheme' ? tabActiveClass : 'opacity-50'}`}
+                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'scheme' ? tabActiveClass : 'opacity-40'}`}
                 >
                   配色
                 </button>
                 <button 
+                  onClick={() => setActiveTab('background')}
+                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'background' ? tabActiveClass : 'opacity-40'}`}
+                >
+                  背景
+                </button>
+                <button 
                   onClick={() => setActiveTab('font')}
-                  className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'font' ? tabActiveClass : 'opacity-50'}`}
+                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'font' ? tabActiveClass : 'opacity-40'}`}
                 >
                   日期
                 </button>
                 <button 
                   onClick={() => setActiveTab('quote')}
-                  className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'quote' ? tabActiveClass : 'opacity-50'}`}
+                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'quote' ? tabActiveClass : 'opacity-40'}`}
                 >
                   金句
+                </button>
+                <button 
+                  onClick={() => setActiveTab('setting')}
+                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'setting' ? tabActiveClass : 'opacity-40'}`}
+                >
+                  设置
                 </button>
               </div>
 
@@ -449,6 +509,24 @@ export default function App() {
                     >
                       <div className={`w-3.5 h-3.5 rounded-full border ${s.bg}`} />
                       {s.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Background List */}
+              {activeTab === 'background' && (
+                <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
+                  {backgrounds.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => setBgId(b.id)}
+                      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                        bgId === b.id ? itemActiveClass : `${itemHoverClass}`
+                      }`}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded-full border ${b.preview}`} />
+                      {b.name}
                     </button>
                   ))}
                 </div>
@@ -505,17 +583,50 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Settings Tab */}
+              {activeTab === 'setting' && (
+                <div className="flex flex-col gap-4 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-medium opacity-60">卡片阴影</span>
+                    <button 
+                      onClick={() => setHasShadow(!hasShadow)}
+                      className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-blue-500' : 'bg-gray-400'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: hasShadow ? 18 : 2 }}
+                        className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
+                      />
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-medium opacity-60">圆角半径 ({borderRadius}px)</span>
+                      <button 
+                        onClick={() => setBorderRadius(borderRadius === 0 ? 4 : 0)}
+                        className={`text-[9px] px-2 py-0.5 rounded-md border transition-all ${borderRadius > 0 ? 'bg-blue-500/20 border-blue-500/30 text-blue-500' : 'border-gray-500/20 opacity-50'}`}
+                      >
+                        {borderRadius === 0 ? '直角' : '圆角'}
+                      </button>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="60" 
+                      value={borderRadius} 
+                      onChange={(e) => setBorderRadius(parseInt(e.target.value))}
+                      className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
-        
-        <button
-          onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all ${mainBtnClass}`}
-        >
-          {isSwitcherOpen ? <X size={20} /> : <Palette size={20} />}
-        </button>
       </div>
-    </div>
+    </motion.div>
+  </motion.div>
+</div>
   );
 }
