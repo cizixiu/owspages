@@ -275,10 +275,25 @@ export default function App() {
   const schemeStyles = currentSchemeData ? (isThemeDark ? currentSchemeData.dark : currentSchemeData.light) || {} : {};
   
   const currentBg = backgrounds.find(b => b.id === bgId);
-  const finalStyles = {
-    ...schemeStyles,
-    ...(currentBg && currentBg.id !== 'default' ? { '--bg-page': currentBg.color } : {})
-  };
+  const bgPageValue = useMemo(() => {
+    if (currentBg && currentBg.id !== 'default') return currentBg.color;
+    return undefined; // Let CSS handle it via var(--bg-page)
+  }, [currentBg]);
+
+  // Sync body background color to avoid gaps on mobile "bounce" or overscroll
+  useEffect(() => {
+    if (bgPageValue) {
+      document.body.style.backgroundColor = bgPageValue;
+    } else {
+      // Fallback is more complex because it depends on the theme
+      // For simplicity, we just set it to the root div's background-color
+      const rootDiv = document.getElementById('root-bg');
+      if (rootDiv) {
+        const computedBg = getComputedStyle(rootDiv).backgroundColor;
+        document.body.style.backgroundColor = computedBg;
+      }
+    }
+  }, [bgPageValue, theme, scheme]);
 
   // Helper for dynamic button classes
   const isDarkBg = ['dark', 'poster', 'technical'].includes(theme) || bgId === 'charcoal' || bgId === 'midnight';
@@ -296,7 +311,15 @@ export default function App() {
   const itemActiveClass = isDarkBg ? 'bg-white text-black' : 'bg-black text-white';
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 md:p-8 pb-32 transition-colors duration-500 theme-${theme} scheme-${scheme}`} style={{ backgroundColor: 'var(--bg-page)', ...finalStyles } as React.CSSProperties}>
+    <div 
+      id="root-bg"
+      className={`min-h-svh w-full flex items-center justify-center p-4 md:p-8 pb-32 transition-colors duration-500 theme-${theme} scheme-${scheme}`} 
+      style={{ 
+        backgroundColor: bgPageValue || 'var(--bg-page)', 
+        ...schemeStyles,
+        '--bg-page': bgPageValue
+      } as React.CSSProperties}
+    >
       <motion.main 
         key={`${theme}-${dateFont}-${bgId}`}
         initial={{ opacity: 0, scale: 0.98 }}

@@ -1,6 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;800;900&family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&family=Cormorant+Garamond:wght@700&family=Abril+Fatface&family=Satisfy&family=Space+Grotesk:wght@700&family=Outfit:wght@800&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=ZCOOL+XiaoWei&family=ZCOOL+QingKe+HuangYou&display=swap');
 @import "tailwindcss";
 
+@layer base {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  #root::-webkit-scrollbar,
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  html, body, #root, * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
 @theme {
   --font-sans: "Inter", "Noto Serif SC", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Georgia", "Times New Roman", "Noto Serif SC", serif;
