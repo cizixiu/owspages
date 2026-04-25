@@ -376,9 +376,6 @@ export default function App() {
         onMouseEnter={() => setIsSidebarHovered(true)}
         onMouseLeave={() => setIsSidebarHovered(false)}
       >
-        {/* Trigger Handle - Subtle Vertical Line */}
-        <div className={`w-1.5 h-32 rounded-l-full cursor-pointer transition-all duration-300 ${isDarkBg ? 'bg-white/20 hover:bg-white/40' : 'bg-black/10 hover:bg-black/30'}`} />
-
         <motion.div 
           variants={{
             hidden: { x: '100%', opacity: 0 },
@@ -387,7 +384,7 @@ export default function App() {
           initial="hidden"
           animate={(isSidebarHovered || isSwitcherOpen) ? 'visible' : 'hidden'}
           transition={{ type: 'spring', damping: 25, stiffness: 180 }}
-          className="flex flex-col items-end gap-4 p-4 pr-6"
+          className="flex flex-col items-end gap-4 p-4 pr-3"
         >
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -438,195 +435,198 @@ export default function App() {
                   exit={{ opacity: 0, x: 20, scale: 0.9 }}
                   className={`fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-2 rounded-3xl border shadow-xl flex flex-col gap-2 min-w-[200px] transition-colors duration-500 ${menuClass}`}
                 >
-              {/* Tabs */}
-              <div className={`grid grid-cols-6 rounded-2xl p-1 mb-1 gap-0.5 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
-                <button 
-                   onClick={() => setActiveTab('theme')}
-                   className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-40'}`}
-                >
-                  风格
-                </button>
-                <button 
-                  onClick={() => setActiveTab('scheme')}
-                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'scheme' ? tabActiveClass : 'opacity-40'}`}
-                >
-                  配色
-                </button>
-                <button 
-                  onClick={() => setActiveTab('background')}
-                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'background' ? tabActiveClass : 'opacity-40'}`}
-                >
-                  背景
-                </button>
-                <button 
-                  onClick={() => setActiveTab('font')}
-                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'font' ? tabActiveClass : 'opacity-40'}`}
-                >
-                  日期
-                </button>
-                <button 
-                  onClick={() => setActiveTab('quote')}
-                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'quote' ? tabActiveClass : 'opacity-40'}`}
-                >
-                  金句
-                </button>
-                <button 
-                  onClick={() => setActiveTab('setting')}
-                  className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'setting' ? tabActiveClass : 'opacity-40'}`}
-                >
-                  设置
-                </button>
-              </div>
-
-              {/* Theme List */}
-              {activeTab === 'theme' && (
-                <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
-                  {themes.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => handleThemeChange(t.id)}
-                      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        theme === t.id ? itemActiveClass : `${itemHoverClass}`
-                      }`}
-                    >
-                      <div className={`w-3.5 h-3.5 rounded-full border ${t.class}`} />
-                      {t.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Scheme List */}
-              {activeTab === 'scheme' && (
-                <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
-                  {colorSchemes.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => setScheme(s.id)}
-                      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        scheme === s.id ? itemActiveClass : `${itemHoverClass}`
-                      }`}
-                    >
-                      <div className={`w-3.5 h-3.5 rounded-full border ${s.bg}`} />
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Background List */}
-              {activeTab === 'background' && (
-                <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
-                  {backgrounds.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => setBgId(b.id)}
-                      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        bgId === b.id ? itemActiveClass : `${itemHoverClass}`
-                      }`}
-                    >
-                      <div className={`w-3.5 h-3.5 rounded-full border ${b.preview}`} />
-                      {b.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Font List */}
-              {activeTab === 'font' && (
-                <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto pr-1">
-                  {fonts.map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => handleFontChange(f.id)}
-                      className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs transition-all ${
-                        dateFont === f.id ? itemActiveClass : `${itemHoverClass}`
-                      }`}
-                    >
-                      <span className="text-lg w-8 overflow-hidden" style={{ fontFamily: f.value }}>88</span>
-                      <span className="flex-1 text-left">{f.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Quote Font List */}
-              {activeTab === 'quote' && (
-                <div className="flex flex-col gap-1 pr-1">
-                  {/* Sync Switch */}
-                  <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl mb-1 ${isDarkBg ? 'bg-white/5' : 'bg-gray-50'}`}>
-                    <span className="text-[10px] opacity-70">全局字体同步</span>
+                  {/* Tabs */}
+                  <div className={`grid grid-cols-6 rounded-2xl p-1 mb-1 gap-0.5 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
                     <button 
-                      onClick={toggleFontSync}
-                      className={`w-8 h-4 rounded-full relative transition-colors ${isFontSync ? 'bg-green-500' : 'bg-gray-400'}`}
+                      onClick={() => setActiveTab('theme')}
+                      className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-40'}`}
                     >
-                      <motion.div 
-                        animate={{ x: isFontSync ? 18 : 2 }}
-                        className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
-                      />
+                      风格
                     </button>
-                  </div>
-
-                  <div className="max-h-[240px] overflow-y-auto flex flex-col gap-1">
-                    {quoteFonts.map((f) => (
-                      <button
-                        key={f.id}
-                        onClick={() => handleQuoteFontChange(f.id)}
-                        className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs transition-all ${
-                          quoteFont === f.id ? itemActiveClass : `${itemHoverClass}`
-                        }`}
-                      >
-                        <span className="text-base w-8 overflow-hidden" style={{ fontFamily: f.value }}>文</span>
-                        <span className="flex-1 text-left">{f.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Settings Tab */}
-              {activeTab === 'setting' && (
-                <div className="flex flex-col gap-4 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium opacity-60">卡片阴影</span>
                     <button 
-                      onClick={() => setHasShadow(!hasShadow)}
-                      className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-blue-500' : 'bg-gray-400'}`}
+                      onClick={() => setActiveTab('scheme')}
+                      className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'scheme' ? tabActiveClass : 'opacity-40'}`}
                     >
-                      <motion.div 
-                        animate={{ x: hasShadow ? 18 : 2 }}
-                        className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
-                      />
+                      配色
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('background')}
+                      className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'background' ? tabActiveClass : 'opacity-40'}`}
+                    >
+                      背景
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('font')}
+                      className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'font' ? tabActiveClass : 'opacity-40'}`}
+                    >
+                      日期
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('quote')}
+                      className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'quote' ? tabActiveClass : 'opacity-40'}`}
+                    >
+                      金句
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('setting')}
+                      className={`text-[8px] py-1.5 rounded-xl transition-all ${activeTab === 'setting' ? tabActiveClass : 'opacity-40'}`}
+                    >
+                      设置
                     </button>
                   </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-medium opacity-60">圆角半径 ({borderRadius}px)</span>
-                      <button 
-                        onClick={() => setBorderRadius(borderRadius === 0 ? 4 : 0)}
-                        className={`text-[9px] px-2 py-0.5 rounded-md border transition-all ${borderRadius > 0 ? 'bg-blue-500/20 border-blue-500/30 text-blue-500' : 'border-gray-500/20 opacity-50'}`}
-                      >
-                        {borderRadius === 0 ? '直角' : '圆角'}
-                      </button>
+
+                  {/* Theme List */}
+                  {activeTab === 'theme' && (
+                    <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
+                      {themes.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => handleThemeChange(t.id)}
+                          className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                            theme === t.id ? itemActiveClass : `${itemHoverClass}`
+                          }`}
+                        >
+                          <div className={`w-3.5 h-3.5 rounded-full border ${t.class}`} />
+                          {t.name}
+                        </button>
+                      ))}
                     </div>
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="60" 
-                      value={borderRadius} 
-                      onChange={(e) => setBorderRadius(parseInt(e.target.value))}
-                      className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                    />
-                  </div>
-                </div>
+                  )}
+
+                  {/* Scheme List */}
+                  {activeTab === 'scheme' && (
+                    <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
+                      {colorSchemes.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => setScheme(s.id)}
+                          className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                            scheme === s.id ? itemActiveClass : `${itemHoverClass}`
+                          }`}
+                        >
+                          <div className={`w-3.5 h-3.5 rounded-full border ${s.bg}`} />
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Background List */}
+                  {activeTab === 'background' && (
+                    <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
+                      {backgrounds.map((b) => (
+                        <button
+                          key={b.id}
+                          onClick={() => setBgId(b.id)}
+                          className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                            bgId === b.id ? itemActiveClass : `${itemHoverClass}`
+                          }`}
+                        >
+                          <div className={`w-3.5 h-3.5 rounded-full border ${b.preview}`} />
+                          {b.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Font List */}
+                  {activeTab === 'font' && (
+                    <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto pr-1">
+                      {fonts.map((f) => (
+                        <button
+                          key={f.id}
+                          onClick={() => handleFontChange(f.id)}
+                          className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs transition-all ${
+                            dateFont === f.id ? itemActiveClass : `${itemHoverClass}`
+                          }`}
+                        >
+                          <span className="text-lg w-8 overflow-hidden" style={{ fontFamily: f.value }}>88</span>
+                          <span className="flex-1 text-left">{f.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Quote Font List */}
+                  {activeTab === 'quote' && (
+                    <div className="flex flex-col gap-1 pr-1">
+                      {/* Sync Switch */}
+                      <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl mb-1 ${isDarkBg ? 'bg-white/5' : 'bg-gray-50'}`}>
+                        <span className="text-[10px] opacity-70">全局字体同步</span>
+                        <button 
+                          onClick={toggleFontSync}
+                          className={`w-8 h-4 rounded-full relative transition-colors ${isFontSync ? 'bg-green-500' : 'bg-gray-400'}`}
+                        >
+                          <motion.div 
+                            animate={{ x: isFontSync ? 18 : 2 }}
+                            className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
+                          />
+                        </button>
+                      </div>
+
+                      <div className="max-h-[240px] overflow-y-auto flex flex-col gap-1">
+                        {quoteFonts.map((f) => (
+                          <button
+                            key={f.id}
+                            onClick={() => handleQuoteFontChange(f.id)}
+                            className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs transition-all ${
+                              quoteFont === f.id ? itemActiveClass : `${itemHoverClass}`
+                            }`}
+                          >
+                            <span className="text-base w-8 overflow-hidden" style={{ fontFamily: f.value }}>文</span>
+                            <span className="flex-1 text-left">{f.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Settings Tab */}
+                  {activeTab === 'setting' && (
+                    <div className="flex flex-col gap-4 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-medium opacity-60">卡片阴影</span>
+                        <button 
+                          onClick={() => setHasShadow(!hasShadow)}
+                          className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-blue-500' : 'bg-gray-400'}`}
+                        >
+                          <motion.div 
+                            animate={{ x: hasShadow ? 18 : 2 }}
+                            className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
+                          />
+                        </button>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium opacity-60">圆角半径 ({borderRadius}px)</span>
+                          <button 
+                            onClick={() => setBorderRadius(borderRadius === 0 ? 4 : 0)}
+                            className={`text-[9px] px-2 py-0.5 rounded-md border transition-all ${borderRadius > 0 ? 'bg-blue-500/20 border-blue-500/30 text-blue-500' : 'border-gray-500/20 opacity-50'}`}
+                          >
+                            {borderRadius === 0 ? '直角' : '圆角'}
+                          </button>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="60" 
+                          value={borderRadius} 
+                          onChange={(e) => setBorderRadius(parseInt(e.target.value))}
+                          className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
-  </motion.div>
-</div>
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Trigger Handle - Subtle Vertical Line ALWAYS at the edge */}
+        <div className={`w-1 h-32 rounded-l-full cursor-pointer transition-all duration-300 relative z-50 ${isDarkBg ? 'bg-white/20 hover:bg-white/40' : 'bg-black/10 hover:bg-black/30'}`} />
+      </motion.div>
+    </div>
   );
 }
