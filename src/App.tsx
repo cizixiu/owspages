@@ -31,6 +31,8 @@ export default function App() {
   const [bgId, setBgId] = useState<string>('default');
   const [hasShadow, setHasShadow] = useState(true);
   const [borderRadius, setBorderRadius] = useState(4);
+  const [borderWidth, setBorderWidth] = useState(1);
+  const [borderColor, setBorderColor] = useState('#E5E7EB');
   const [isFontSync, setIsFontSync] = useState(false);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -51,6 +53,12 @@ export default function App() {
 
     const savedFontSync = localStorage.getItem('calendar-font-sync') === 'true';
     setIsFontSync(savedFontSync);
+
+    const savedBorderWidth = localStorage.getItem('calendar-border-width');
+    if (savedBorderWidth) setBorderWidth(parseInt(savedBorderWidth));
+
+    const savedBorderColor = localStorage.getItem('calendar-border-color');
+    if (savedBorderColor) setBorderColor(savedBorderColor);
   }, []);
 
   const handleThemeChange = (newTheme: ThemeType) => {
@@ -330,7 +338,10 @@ export default function App() {
         style={{ 
           '--dynamic-font': currentFontValue,
           fontFamily: isFontSync ? currentQuoteFontValue : 'inherit',
-          borderRadius: `${borderRadius}px`
+          borderRadius: `${borderRadius}px`,
+          borderWidth: `${borderWidth}px`,
+          borderColor: borderColor,
+          borderStyle: borderWidth > 0 ? 'solid' : 'none'
         } as React.CSSProperties}
       >
         <header className="flex justify-between items-start mb-5" id="header">
@@ -637,6 +648,56 @@ export default function App() {
                           value={borderRadius} 
                           onChange={(e) => setBorderRadius(parseInt(e.target.value))}
                           className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium opacity-60">边框粗细 ({borderWidth}px)</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="10" 
+                          value={borderWidth} 
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            setBorderWidth(val);
+                            localStorage.setItem('calendar-border-width', String(val));
+                          }}
+                          className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium opacity-60">边框颜色</span>
+                          <div 
+                            className="w-4 h-4 rounded-full border border-gray-300"
+                            style={{ backgroundColor: borderColor }}
+                          />
+                        </div>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B'].map(c => (
+                            <button
+                              key={c}
+                              onClick={() => {
+                                setBorderColor(c);
+                                localStorage.setItem('calendar-border-color', c);
+                              }}
+                              className={`w-5 h-5 rounded-md border-2 transition-all ${borderColor === c ? 'border-blue-500 scale-110' : 'border-transparent'}`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+                        <input 
+                          type="color" 
+                          value={borderColor} 
+                          onChange={(e) => {
+                            setBorderColor(e.target.value);
+                            localStorage.setItem('calendar-border-color', e.target.value);
+                          }}
+                          className="w-full h-8 p-0 rounded-md border-0 cursor-pointer bg-transparent"
                         />
                       </div>
                     </div>
