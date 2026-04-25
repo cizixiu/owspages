@@ -219,6 +219,8 @@ body {
   border-color: var(--border-card);
   font-family: var(--font-main);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  container-type: inline-size;
+  container-name: calendar;
   /* padding is handled by tailwind classes in App.tsx */
 }
 
@@ -236,7 +238,8 @@ body {
 
 .month-box {
   border-color: var(--border-accent);
-  @apply border-2 px-3 py-1 font-black text-lg tracking-[2px] uppercase transition-all duration-500 whitespace-nowrap flex-shrink-0;
+  @apply border-2 px-3 py-1 font-black tracking-[2px] uppercase transition-all duration-500 whitespace-nowrap flex-shrink-0;
+  font-size: clamp(14px, 3.5cqw, 18px);
 }
 
 .theme-classic .month-box {
@@ -253,7 +256,8 @@ body {
 
 .date-number {
   font-family: var(--dynamic-font, var(--font-serif));
-  @apply text-[140px] sm:text-[180px] md:text-[280px] leading-none select-none transition-all duration-500 my-2 md:my-0;
+  font-size: clamp(140px, 52cqw, 280px);
+  @apply leading-none select-none transition-all duration-500 my-2 md:my-0;
 }
 
 .theme-classic .date-number {
@@ -261,15 +265,17 @@ body {
 }
 
 .theme-traditional .date-number {
-  @apply text-[140px] sm:text-[160px] md:text-[220px];
+  font-size: clamp(120px, 42cqw, 220px);
 }
 
 .theme-technical .date-number {
-  @apply text-[130px] sm:text-[160px] md:text-[220px] tracking-tighter;
+  font-size: clamp(120px, 40cqw, 220px);
+  @apply tracking-tighter;
 }
 
 .theme-poster .date-number {
-  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0 md:-right-12 md:-bottom-16 text-[270px] sm:text-[360px] md:text-[500px] opacity-[0.08] font-black italic tracking-tighter;
+  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0 md:-right-12 md:-bottom-16 opacity-[0.08] font-black italic tracking-tighter;
+  font-size: clamp(260px, 90cqw, 500px);
   pointer-events: none;
 }
 
@@ -278,24 +284,25 @@ body {
 }
 
 .sidebar {
-  @apply flex items-center justify-center text-[9px] md:text-[11px] tracking-[1px] md:tracking-[4px] h-fit whitespace-nowrap transition-all duration-500;
+  @apply flex items-center justify-center tracking-[1.5cqw] h-fit whitespace-nowrap transition-all duration-500;
+  font-size: clamp(9px, 2cqw, 11px);
   color: var(--color-muted);
   writing-mode: vertical-rl;
   text-orientation: mixed;
 }
 
 .sidebar-left {
-  @apply border-l pl-2 md:pl-3 mr-2 md:mr-0;
+  @apply border-l pl-2 md:pl-3 ml-2 md:ml-4;
   border-color: var(--border-card);
 }
 
 .sidebar-right {
-  @apply border-r pr-2 md:pr-3 ml-2 md:ml-0;
+  @apply border-r pr-2 md:pr-3 mr-2 md:mr-4;
   border-color: var(--border-card);
 }
 
 .theme-traditional .sidebar {
-  @apply text-sm tracking-[8px];
+  @apply text-sm tracking-[4px];
   border: none;
 }
 
@@ -304,7 +311,8 @@ body {
 }
 
 .quote-text {
-  @apply text-[13px] md:text-xl font-bold leading-relaxed transition-all duration-500;
+  @apply font-bold leading-relaxed transition-all duration-500;
+  font-size: clamp(13px, 4cqw, 21px);
   color: var(--color-text);
   text-wrap: balance;
 }

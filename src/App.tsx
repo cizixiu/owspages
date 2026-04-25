@@ -119,10 +119,10 @@ export default function App() {
         : (isModern ? `${monthNamesEn[month - 1]} ${monthNames[month - 1]}` : monthNames[month - 1]),
       day,
       weekday: isModern ? `${weekDays[weekIdx]} ${weekDaysEn[weekIdx].toUpperCase()}` : weekDays[weekIdx],
-      lunarDate: theme === 'classic' ? `农历 ${lunarMonth}月${lunarDay} · ${festivals.length > 0 ? festivals[0] : solarTerm || ''}` : `农历 ${lunarMonth}月${lunarDay}`,
+      lunarDate: theme === 'classic' ? `农历${lunarMonth}月${lunarDay}·${festivals.length > 0 ? festivals[0] : solarTerm || ''}` : `农历${lunarMonth}月${lunarDay}`,
       lunarGanzhi: theme === 'classic' || theme === 'traditional' 
-        ? `${lunarYearGanzhi}年 · ${lunarMonthGanzhi}月 · ${lunarDayGanzhi}日` 
-        : `${lunarYearGanzhi}年 ${lunarMonthGanzhi}月 ${lunarDayGanzhi}日`,
+        ? `${lunarYearGanzhi}年·${lunarMonthGanzhi}月·${lunarDayGanzhi}日` 
+        : `${lunarYearGanzhi}年${lunarMonthGanzhi}月${lunarDayGanzhi}日`,
       festivals: festivals.length > 0 ? festivals[0] : solarTerm || '',
       quote,
       advice
