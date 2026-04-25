@@ -194,7 +194,7 @@ body {
   --border-accent: #800020;
 }
 .theme-crimson .calendar-container {
-  @apply border-none shadow-[0_30px_60px_rgba(128,0,32,0.15)];
+  @apply border-none;
 }
 .theme-crimson .month-box {
   @apply w-16 h-16 flex items-center justify-center rounded-full bg-[#800020] text-white border-none p-0 text-xl font-bold;
@@ -207,7 +207,10 @@ body {
   @apply flex items-center justify-center flex-1 my-0;
 }
 .theme-crimson .bottom-section {
-  @apply mt-2 md:mt-4;
+  @apply mt-2 md:mt-4 mb-2;
+}
+.theme-crimson .calendar-container {
+  @apply pb-10 md:pb-12;
 }
 .theme-crimson .quote-text {
   @apply text-[#800020] font-black italic;

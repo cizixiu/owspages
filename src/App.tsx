@@ -333,7 +333,7 @@ export default function App() {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className={`calendar-container w-full max-w-[540px] aspect-[3/4] border relative p-5 md:p-10 overflow-hidden select-none flex flex-col transition-all duration-500 ${hasShadow ? 'shadow-[0_40px_100px_rgba(0,0,0,0.12)]' : 'shadow-none'}`}
+        className={`calendar-container w-full max-w-[560px] min-h-[500px] md:aspect-[3/4] border relative p-7 md:p-12 overflow-hidden select-none flex flex-col transition-all duration-500 ${hasShadow ? 'shadow-[0_40px_100px_rgba(0,0,0,0.12)]' : 'shadow-none'}`}
         id="calendar-container"
         style={{ 
           '--dynamic-font': currentFontValue,
@@ -341,7 +341,8 @@ export default function App() {
           borderRadius: `${borderRadius}px`,
           borderWidth: `${borderWidth}px`,
           borderColor: borderColor,
-          borderStyle: borderWidth > 0 ? 'solid' : 'none'
+          borderStyle: borderWidth > 0 ? 'solid' : 'none',
+          boxShadow: hasShadow ? undefined : 'none'
         } as React.CSSProperties}
       >
         <header className="flex justify-between items-start mb-5" id="header">
