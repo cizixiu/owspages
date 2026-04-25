@@ -60,7 +60,7 @@ body {
   --color-text: #1A1A1A;
   --color-muted: #666;
   --border-card: #DCDCDC;
-  --border-accent: #1A1A1A;
+  --border-accent: var(--color-primary, #1A1A1A);
   --font-main: var(--font-serif);
 }
 
@@ -71,7 +71,7 @@ body {
   --color-text: #1A1A1A;
   --color-muted: #888;
   --border-card: rgba(0,0,0,0.08);
-  --border-accent: #1A1A1A;
+  --border-accent: var(--color-primary, #1A1A1A);
   --font-main: var(--font-chinese);
 }
 
@@ -82,7 +82,7 @@ body {
   --color-text: #E0E0E0;
   --color-muted: #AAAAAA;
   --border-card: #333;
-  --border-accent: #E0E0E0;
+  --border-accent: var(--color-primary, #E0E0E0);
   --font-main: var(--font-serif);
 }
 
@@ -93,7 +93,7 @@ body {
   --color-text: #4E342E;
   --color-muted: #8D6E63;
   --border-card: #D7CCC8;
-  --border-accent: #5D4037;
+  --border-accent: var(--color-primary, #5D4037);
   --font-main: var(--font-serif);
 }
 
@@ -104,7 +104,7 @@ body {
   --color-text: #64FFDA;
   --color-muted: #A8B2D1;
   --border-card: #233554;
-  --border-accent: #64FFDA;
+  --border-accent: var(--color-primary, #64FFDA);
   --font-main: "JetBrains Mono", monospace;
 }
 
@@ -115,7 +115,7 @@ body {
   --color-text: #000000;
   --color-muted: #999;
   --border-card: transparent;
-  --border-accent: #C41E3A;
+  --border-accent: var(--color-primary, #C41E3A);
   --font-main: var(--font-sans);
 }
 
@@ -126,7 +126,7 @@ body {
   --color-text: #2A0E08;
   --color-muted: #8E7162;
   --border-card: #EADBC8;
-  --border-accent: #B03A2E;
+  --border-accent: var(--color-primary, #B03A2E);
   --font-main: var(--font-chinese);
 }
 
@@ -137,7 +137,7 @@ body {
   --color-text: #000000;
   --color-muted: #999999;
   --border-card: #EEEEEE;
-  --border-accent: #000000;
+  --border-accent: var(--color-primary, #000000);
 }
 .theme-editorial .month-box {
   @apply border-b-2 border-t-0 border-l-0 border-r-0 px-0 mb-4 md:mb-8 italic font-serif lowercase text-3xl tracking-tighter;
@@ -153,13 +153,13 @@ body {
   --color-text: #264653;
   --color-muted: #0a0a0a;
   --border-card: #264653;
-  --border-accent: #E76F51;
+  --border-accent: var(--color-primary, #E76F51);
 }
 .theme-vintage .calendar-container {
   @apply rounded-[40px] border-[6px];
 }
 .theme-vintage .month-box {
-  @apply bg-[#264653] text-[#F4A261] rounded-full px-6 py-2 border-none;
+  @apply bg-[var(--border-accent)] text-[#F4A261] rounded-full px-6 py-2 border-none;
 }
 .theme-vintage #footer-main {
   @apply border-[var(--border-accent)] opacity-100;
@@ -175,13 +175,13 @@ body {
   --color-text: #33691E;
   --color-muted: #689F38;
   --border-card: #C5E1A5;
-  --border-accent: #8BC34A;
+  --border-accent: var(--color-primary, #8BC34A);
 }
 .theme-zen .calendar-container {
   @apply border-x-0 border-y-2;
 }
 .theme-zen .month-box {
-  @apply border-none font-light tracking-[8px] text-[#8BC34A];
+  @apply border-none font-light tracking-[8px] text-[var(--border-accent)];
 }
 
 /* Crimson Theme */
@@ -191,16 +191,26 @@ body {
   --color-text: #800020;
   --color-muted: #A0522D;
   --border-card: #DCDCDC;
-  --border-accent: #800020;
+  --border-accent: var(--color-primary, #800020);
 }
 .theme-crimson .calendar-container {
   @apply border-none;
 }
 .theme-crimson .month-box {
-  @apply w-16 h-16 flex items-center justify-center rounded-full bg-[#800020] text-white border-none p-0 text-xl font-bold;
+  @apply w-16 h-16 flex items-center justify-center rounded-full bg-[var(--border-accent)] text-white border-none p-0 text-xl font-bold;
+}
+.theme-crimson .date-number-wrapper {
+  @apply relative;
+}
+.theme-crimson .date-number-wrapper::after {
+  content: "";
+  @apply absolute -inset-4 border-4 rounded-full;
+  border-color: var(--border-accent);
+  opacity: 0.3;
 }
 .theme-crimson .date-number {
-  @apply border-[4px] border-[#800020] rounded-full w-[1.4em] h-[1.4em] flex items-center justify-center mx-auto leading-none pt-[0.1em];
+  @apply border-[4px] rounded-full w-[1.4em] h-[1.4em] flex items-center justify-center mx-auto leading-none pt-[0.1em];
+  border-color: var(--border-accent);
   font-weight: 900;
 }
 .theme-crimson .date-section {
@@ -246,7 +256,8 @@ body {
 }
 
 .theme-classic .month-box {
-  @apply rounded-full border border-black font-medium text-sm normal-case;
+  @apply rounded-full border font-medium text-sm normal-case;
+  border-color: var(--border-accent);
 }
 
 .theme-poster .month-box {

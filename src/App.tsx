@@ -379,6 +379,7 @@ export default function App() {
         id="calendar-container"
         style={{ 
           '--dynamic-font': currentFontValue,
+          '--color-primary': schemeStyles['--border-accent'],
           fontFamily: isFontSync ? currentQuoteFontValue : 'inherit',
           borderRadius: `${borderRadius}px`,
           borderWidth: `${borderWidth}px`,
