@@ -15,6 +15,23 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  /* Custom Color Input Styling */
+  input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 8px;
+  }
+  input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 8px;
+  }
 }
 
 @theme {
@@ -73,6 +90,11 @@ body {
   --border-card: rgba(0,0,0,0.08);
   --border-accent: var(--color-primary, #1A1A1A);
   --font-main: var(--font-chinese);
+}
+.theme-classic .month-box {
+  @apply rounded-full border font-medium text-sm normal-case;
+  border-color: var(--border-accent);
+  color: var(--border-accent);
 }
 
 /* --- Theme: Dark --- */
@@ -165,7 +187,8 @@ body {
   @apply border-[var(--border-accent)] opacity-100;
 }
 .theme-vintage #brand, .theme-vintage #footer-day-year div {
-  @apply opacity-100 text-[#000000];
+  @apply opacity-100;
+  color: var(--color-text);
 }
 
 /* Zen Theme */
@@ -223,7 +246,8 @@ body {
   @apply pb-10 md:pb-12;
 }
 .theme-crimson .quote-text {
-  @apply text-[#800020] font-black italic;
+  @apply font-black italic;
+  color: var(--color-text);
 }
 
 .calendar-container {
@@ -253,11 +277,6 @@ body {
   border-color: var(--border-accent);
   @apply border-2 px-3 py-1 font-black tracking-[2px] uppercase transition-all duration-500 whitespace-nowrap flex-shrink-0;
   font-size: clamp(14px, 3.5cqw, 18px);
-}
-
-.theme-classic .month-box {
-  @apply rounded-full border font-medium text-sm normal-case;
-  border-color: var(--border-accent);
 }
 
 .theme-poster .month-box {
@@ -356,9 +375,12 @@ body {
 }
 
 .festival-badge {
-  @apply absolute -top-8 right-0 bg-[#C00] text-white text-[10px] px-2 py-0.5 font-bold;
+  @apply absolute -top-8 right-0 text-white text-[10px] px-2 py-0.5 font-bold;
+  background-color: var(--border-accent, #C00);
 }
 
 .theme-technical .festival-badge {
-  @apply bg-[#64FFDA] text-[#0A192F] opacity-100;
+  @apply opacity-100;
+  background-color: var(--border-accent);
+  color: var(--bg-page);
 }
