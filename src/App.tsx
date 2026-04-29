@@ -276,17 +276,15 @@ export default function App() {
 
     setIsDownloading(true);
     try {
-      // Small delay to ensure any layout shifts are settled
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const bgColor = getComputedStyle(node).backgroundColor;
-
-      // Use toPng with more robust options
+      // 优化生成速度：降低冗余的采样倍率，并精确控制资源加载
       const dataUrl = await toPng(node, { 
-        pixelRatio: 3, // Higher quality
-        backgroundColor: bgColor, // Dynamically use the theme's background color
-        cacheBust: true,
+        pixelRatio: 2, // 2倍采样已足够高清，3倍会导致资源消耗和生成时间剧增
+        backgroundColor: getComputedStyle(node).backgroundColor,
+        cacheBust: false, // 减少不必要的网络请求
         skipFonts: false,
+        style: {
+          transform: 'scale(1)', // 确保导出时状态稳定
+        }
       });
       
       const link = document.createElement('a');
@@ -564,6 +562,54 @@ export default function App() {
 
         <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
       </motion.main>
+
+      {/* Global Download Progress Overlay */}
+      <AnimatePresence>
+        {isDownloading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 max-w-[280px] w-full mx-4"
+            >
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 border-4 border-blue-50 rounded-full" />
+                <motion.div
+                  className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Download size={24} className="text-blue-500" />
+                </div>
+              </div>
+              
+              <div className="text-center space-y-1.5">
+                <h3 className="text-[15px] font-bold text-gray-900">正在生成高清图</h3>
+                <p className="text-[11px] text-gray-500 leading-relaxed px-2">
+                  系统正在为您排版并合成高分辨率视图，请稍候...
+                </p>
+              </div>
+
+              {/* Fake Progress Bar to reduce anxiety */}
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-blue-500"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "95%" }}
+                  transition={{ duration: 3, ease: "easeOut" }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Preference Switcher */}
       <motion.div 
