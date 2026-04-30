@@ -576,38 +576,56 @@ export default function App() {
 
     setIsDownloading(true);
     
-    // Create a timeout promise to prevent indefinite hanging
+    // Increased timeout for mobile devices
+    const TIMEOUT_DURATION = 35000;
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Download timeout')), 25000)
+      setTimeout(() => reject(new Error('Download timeout')), TIMEOUT_DURATION)
     );
 
-    try {
-      // 稍微延长一点等待时间，并确保布局稳定
-      await new Promise(resolve => setTimeout(resolve, 300));
+    const performRendering = async (scale: number) => {
+      // Ensure all fonts are loaded before capturing
+      if ('fonts' in document) {
+        await (document as any).fonts.ready;
+      }
 
-      // 使用 toCanvas 提高兼容性
-      const canvas = await Promise.race([
-        toCanvas(node, { 
-          pixelRatio: 2, 
-          backgroundColor: getComputedStyle(node).backgroundColor || '#ffffff',
-          cacheBust: true,
-          style: {
-            transform: 'scale(1)', 
-          },
-          filter: (domNode) => {
-            if (domNode instanceof HTMLElement && domNode.classList.contains('download-overlay')) {
-              return false;
-            }
-            return true;
+      return await toCanvas(node, { 
+        pixelRatio: scale, 
+        backgroundColor: getComputedStyle(node).backgroundColor || '#ffffff',
+        cacheBust: true,
+        style: {
+          transform: 'scale(1)', 
+        },
+        filter: (domNode) => {
+          if (domNode instanceof HTMLElement && domNode.classList.contains('download-overlay')) {
+            return false;
           }
-        }),
-        timeoutPromise
-      ]) as HTMLCanvasElement;
+          return true;
+        }
+      });
+    };
+
+    try {
+      // Wait for layout to settle
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      let canvas: HTMLCanvasElement;
+      
+      try {
+        // Try high resolution first
+        canvas = await Promise.race([
+          performRendering(2),
+          timeoutPromise
+        ]) as HTMLCanvasElement;
+      } catch (err) {
+        console.warn('High-res render failed or timed out, trying standard resolution...', err);
+        // Fallback to standard resolution if high-res fails or times out
+        canvas = await performRendering(1.2);
+      }
       
       if (!canvas) throw new Error('Failed to generate canvas');
 
-      // 将 canvas 转换为 blob
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+      // Use a more compatible way to trigger download
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
       
       if (!blob || blob.size < 100) throw new Error('Generated image is empty');
       
@@ -615,23 +633,23 @@ export default function App() {
       const link = document.createElement('a');
       link.download = `Du-Almanac-${calendarData.year}${calendarData.monthName}${calendarData.day}.png`;
       link.href = url;
-      link.target = '_blank';
+      link.target = '_blank'; // Essential for some mobile browsers
       
+      // For iOS Safari compatibility
       document.body.appendChild(link);
       link.click();
       
-      // 延迟清理以确保下载触发
+      // Cleanup
       setTimeout(() => {
         if (link.parentNode) document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      }, 500);
+      }, 1000);
       
-      // 添加一个完成后的短延迟
       await new Promise(resolve => setTimeout(resolve, 600));
     } catch (err) {
       console.error('Download failed:', err);
       const errorMsg = err instanceof Error ? err.message : '未知错误';
-      alert(`下载失败 (${errorMsg})。建议：\n1. 尝试刷新页面重试\n2. 在电脑版 Chrome/Safari 浏览器上操作\n3. 检查网络连接`);
+      alert(`下载遇到了点困难 (${errorMsg})。\n\n常见解决方案：\n1. 稍等几秒后刷新页面重试\n2. 尝试切换网络环境\n3. 在电脑浏览器上打开可获得最佳下载体验`);
     } finally {
       setIsDownloading(false);
     }
