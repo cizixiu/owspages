@@ -289,8 +289,49 @@ body {
 
 .date-number {
   font-family: var(--dynamic-font, var(--font-serif));
-  font-size: clamp(140px, 52cqw, 280px);
-  @apply leading-none select-none transition-all duration-500 my-2 md:my-0;
+  font-size: var(--date-font-size, clamp(140px, 52cqw, 280px));
+  @apply leading-[1.1] select-none transition-all duration-500 my-2 md:my-0 inline-block;
+  padding: 0.03em 0.08em;
+}
+
+/* 8 Distinctive High-End Styles */
+.date-style-standard {
+  @apply transition-all font-medium;
+}
+
+.date-style-shadow {
+  @apply relative font-bold inline-block;
+  isolation: isolate;
+}
+
+.date-style-shadow::before {
+  content: attr(data-date);
+  position: absolute;
+  /* 投向右上方，影子放大 1.5 倍 */
+  top: -20%;
+  right: -15%;
+  font-size: 1.5em;
+  /* 浅灰色影子：使用黑色加低透明度模拟 */
+  color: #000;
+  opacity: 0.12;
+  z-index: -1;
+  filter: blur(16px);
+  transform: rotate(-3deg) skew(-2deg);
+  pointer-events: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.date-style-hollow {
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 2.5px currentColor;
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.05));
+  @apply font-black tracking-tight;
+}
+
+.date-style-glow {
+  filter: drop-shadow(0 0 15px currentColor);
+  @apply opacity-90 transition-all duration-500 font-bold;
 }
 
 .theme-classic .date-number {
@@ -298,17 +339,17 @@ body {
 }
 
 .theme-traditional .date-number {
-  font-size: clamp(120px, 42cqw, 220px);
+  --date-font-size: clamp(120px, 42cqw, 220px);
 }
 
 .theme-technical .date-number {
-  font-size: clamp(120px, 40cqw, 220px);
+  --date-font-size: clamp(120px, 40cqw, 220px);
   @apply tracking-tighter;
 }
 
 .theme-poster .date-number {
   @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0 md:-right-12 md:-bottom-16 opacity-[0.08] font-black italic tracking-tighter;
-  font-size: clamp(260px, 90cqw, 500px);
+  --date-font-size: clamp(260px, 90cqw, 500px);
   pointer-events: none;
 }
 

@@ -7,8 +7,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar, Lunar } from 'lunar-javascript';
 import { QUOTES, ADVICE_POOL } from './data/quotes';
-import { Palette, X, Download, RefreshCw, RotateCcw } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { Palette, X, Download, RefreshCw, RotateCcw, Type, Baseline, Layers, Check } from 'lucide-react';
+import { toBlob } from 'html-to-image';
 
 const getHash = (str: string) => {
   let hash = 0;
@@ -29,6 +29,10 @@ export default function App() {
   const [quoteFont, setQuoteFont] = useState<QuoteFontType>('serif');
   const [scheme, setScheme] = useState<string>('original');
   const [bgId, setBgId] = useState<string>('default');
+  const [quoteFontSize, setQuoteFontSize] = useState<number | undefined>(undefined);
+  const [adviceFontSize, setAdviceFontSize] = useState<number | undefined>(undefined);
+  const [dayFontSize, setDayFontSize] = useState<number | undefined>(undefined);
+  const [dayStyle, setDayStyle] = useState<string>('standard');
   const [hasShadow, setHasShadow] = useState(true);
   const [borderRadius, setBorderRadius] = useState<number | undefined>(undefined);
   const [borderWidth, setBorderWidth] = useState<number | undefined>(undefined);
@@ -39,6 +43,8 @@ export default function App() {
   const [customAppBgColor, setCustomAppBgColor] = useState<string>('');
   const [customCardBgColor, setCustomCardBgColor] = useState<string>('');
   const [customBorderColor, setCustomBorderColor] = useState<string>('');
+  const [isCustomBorder, setIsCustomBorder] = useState(false);
+  const [isCustomCardBg, setIsCustomCardBg] = useState(false);
 
   const cardBgs = [
     { id: 'white', color: '#FFFFFF', label: '纯白' },
@@ -49,6 +55,10 @@ export default function App() {
     { id: 'gray', color: '#F3F4F6', label: '浅灰' },
     { id: 'blue', color: '#EBF5FF', label: '淡蓝' },
     { id: 'green', color: '#F0FDF4', label: '浅艾' },
+    { id: 'cloud', color: '#F1F5F9', label: '云纹' },
+    { id: 'wheat', color: '#FBF8F1', label: '麦香' },
+    { id: 'glacier', color: '#F0FDFA', label: '冰川' },
+    { id: 'shell', color: '#FFFBF0', label: '贝耳' },
   ];
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -79,6 +89,18 @@ export default function App() {
     const savedShadow = localStorage.getItem('calendar-shadow');
     if (savedShadow !== null) setHasShadow(savedShadow === 'true');
 
+    const savedQuoteFontSize = localStorage.getItem('calendar-quote-font-size');
+    if (savedQuoteFontSize) setQuoteFontSize(parseInt(savedQuoteFontSize));
+
+    const savedAdviceFontSize = localStorage.getItem('calendar-advice-font-size');
+    if (savedAdviceFontSize) setAdviceFontSize(parseInt(savedAdviceFontSize));
+
+    const savedDayFontSize = localStorage.getItem('calendar-day-font-size');
+    if (savedDayFontSize) setDayFontSize(parseInt(savedDayFontSize));
+
+    const savedDayStyle = localStorage.getItem('calendar-day-style');
+    if (savedDayStyle) setDayStyle(savedDayStyle);
+
     const savedRadius = localStorage.getItem('calendar-radius');
     if (savedRadius) setBorderRadius(parseInt(savedRadius));
 
@@ -89,10 +111,14 @@ export default function App() {
     if (savedBorderColor) {
       setBorderColor(savedBorderColor);
       setCustomBorderColor(savedBorderColor);
+      setIsCustomBorder(localStorage.getItem('calendar-border-custom') === 'true');
     }
 
     const savedCardBg = localStorage.getItem('calendar-card-bg');
-    if (savedCardBg) setCardBg(savedCardBg);
+    if (savedCardBg) {
+      setCardBg(savedCardBg);
+      setIsCustomCardBg(localStorage.getItem('calendar-card-custom') === 'true');
+    }
 
     const savedCustomPrimary = localStorage.getItem('calendar-custom-primary');
     if (savedCustomPrimary) setCustomPrimaryColor(savedCustomPrimary);
@@ -164,22 +190,48 @@ export default function App() {
     localStorage.setItem('calendar-border-width', String(newVal));
   };
 
-  const handleBorderColorChange = (newColor: string) => {
+  const handleQuoteFontSizeChange = (newSize: number) => {
+    setQuoteFontSize(newSize);
+    localStorage.setItem('calendar-quote-font-size', String(newSize));
+  };
+
+  const handleAdviceFontSizeChange = (newSize: number) => {
+    setAdviceFontSize(newSize);
+    localStorage.setItem('calendar-advice-font-size', String(newSize));
+  };
+
+  const handleDayFontSizeChange = (newSize: number) => {
+    setDayFontSize(newSize);
+    localStorage.setItem('calendar-day-font-size', String(newSize));
+  };
+
+  const handleDayStyleChange = (style: string) => {
+    setDayStyle(style);
+    localStorage.setItem('calendar-day-style', style);
+  };
+
+  const handleBorderColorChange = (newColor: string, isCustom = false) => {
     setBorderColor(newColor);
-    setCustomBorderColor(newColor);
+    setIsCustomBorder(isCustom);
+    if (isCustom) setCustomBorderColor(newColor);
     localStorage.setItem('calendar-border-color', newColor);
+    localStorage.setItem('calendar-border-custom', String(isCustom));
   };
 
   const handleCardBgChange = (newVal: string) => {
     setCardBg(newVal);
+    setIsCustomCardBg(false);
     localStorage.setItem('calendar-card-bg', newVal);
+    localStorage.setItem('calendar-card-custom', 'false');
   };
 
   const handleCustomCardBgChange = (color: string) => {
     setCustomCardBgColor(color);
     setCardBg(color);
+    setIsCustomCardBg(true);
     localStorage.setItem('calendar-custom-card-bg', color);
     localStorage.setItem('calendar-card-bg', color);
+    localStorage.setItem('calendar-card-custom', 'true');
   };
 
   const [resetSuccess, setResetSuccess] = useState(false);
@@ -188,11 +240,17 @@ export default function App() {
     // Reset Overrides to Theme Defaults (undefined/empty)
     setBorderRadius(undefined);
     setBorderWidth(undefined);
+    setQuoteFontSize(undefined);
+    setAdviceFontSize(undefined);
+    setDayFontSize(undefined);
+    setDayStyle('standard');
     setBorderColor('');
     setCardBg('');
     setScheme('original');
     setBgId('default');
     setIsFontSync(false);
+    setIsCustomBorder(false);
+    setIsCustomCardBg(false);
     
     // Clear custom color inputs
     setCustomPrimaryColor('');
@@ -212,7 +270,11 @@ export default function App() {
       'calendar-font-sync',
       'calendar-custom-primary', 
       'calendar-custom-app-bg', 
-      'calendar-custom-card-bg'
+      'calendar-custom-card-bg',
+      'calendar-quote-font-size',
+      'calendar-advice-font-size',
+      'calendar-day-font-size',
+      'calendar-day-style'
     ];
     overrideKeys.forEach(key => localStorage.removeItem(key));
     
@@ -276,21 +338,32 @@ export default function App() {
 
     setIsDownloading(true);
     try {
-      // 优化生成速度：降低冗余的采样倍率，并精确控制资源加载
-      const dataUrl = await toPng(node, { 
-        pixelRatio: 2, // 2倍采样已足够高清，3倍会导致资源消耗和生成时间剧增
+      // 稍微延长一点等待时间，确保进度条的最初动力感已经建立
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 使用 toBlob 替换 toPng 以获得更快的生成速度和更低的内存占用
+      const blob = await toBlob(node, { 
+        pixelRatio: 2, 
         backgroundColor: getComputedStyle(node).backgroundColor,
-        cacheBust: false, // 减少不必要的网络请求
+        cacheBust: false, 
         skipFonts: false,
         style: {
-          transform: 'scale(1)', // 确保导出时状态稳定
+          transform: 'scale(1)', 
         }
       });
       
+      if (!blob) throw new Error('Failed to generate image');
+      
       const link = document.createElement('a');
       link.download = `OWSPACE-${calendarData.year}${calendarData.monthName}${calendarData.day}.png`;
-      link.href = dataUrl;
+      link.href = URL.createObjectURL(blob);
       link.click();
+      
+      // 释放 URL 对象
+      setTimeout(() => URL.revokeObjectURL(link.href), 100);
+      
+      // 添加一个完成后的短延迟，让用户看到进度条满了，减少突兀感
+      await new Promise(resolve => setTimeout(resolve, 600));
     } catch (err) {
       console.error('Download failed:', err);
       alert('下载失败，请稍后重试或尝试在桌面端操作。');
@@ -398,6 +471,27 @@ export default function App() {
       light: { '--bg-page': '#F3E5F5', '--bg-card': '#FFFFFF', '--color-text': '#6A1B9A', '--color-muted': '#7B1FA2', '--border-card': '#E1BEE7', '--border-accent': '#6A1B9A' },
       dark: { '--bg-page': '#130A19', '--bg-card': '#21112D', '--color-text': '#CE93D8', '--color-muted': '#E1BEE7', '--border-card': '#311B92', '--border-accent': '#CE93D8' }
     },
+    { 
+      id: 'slate', 
+      name: '石板', 
+      bg: 'bg-[#475569]', 
+      light: { '--bg-page': '#F1F5F9', '--bg-card': '#FFFFFF', '--color-text': '#334155', '--color-muted': '#475569', '--border-card': '#E2E8F0', '--border-accent': '#334155' },
+      dark: { '--bg-page': '#0F172A', '--bg-card': '#1E293B', '--color-text': '#94A3B8', '--color-muted': '#CBD5E1', '--border-card': '#334155', '--border-accent': '#94A3B8' }
+    },
+    { 
+      id: 'amber', 
+      name: '琥珀', 
+      bg: 'bg-[#D97706]', 
+      light: { '--bg-page': '#FFFBEB', '--bg-card': '#FFFFFF', '--color-text': '#92400E', '--color-muted': '#B45309', '--border-card': '#FEF3C7', '--border-accent': '#92400E' },
+      dark: { '--bg-page': '#451A03', '--bg-card': '#78350F', '--color-text': '#FBBF24', '--color-muted': '#FCD34D', '--border-card': '#92400E', '--border-accent': '#FBBF24' }
+    },
+    { 
+      id: 'rosewood', 
+      name: '檀香', 
+      bg: 'bg-[#991B1B]', 
+      light: { '--bg-page': '#FEF2F2', '--bg-card': '#FFFFFF', '--color-text': '#7F1D1D', '--color-muted': '#991B1B', '--border-card': '#FEE2E2', '--border-accent': '#7F1D1D' },
+      dark: { '--bg-page': '#450A0A', '--bg-card': '#7F1D1D', '--color-text': '#FCA5A5', '--color-muted': '#FECACA', '--border-card': '#991B1B', '--border-accent': '#FCA5A5' }
+    },
   ];
 
   const backgrounds = [
@@ -410,6 +504,9 @@ export default function App() {
     { id: 'rose', name: '藕粉', color: '#FDF0F0', preview: 'bg-[#FDF0F0]' },
     { id: 'charcoal', name: '玄灰', color: '#2C2C2C', preview: 'bg-[#2C2C2C]' },
     { id: 'midnight', name: '黛蓝', color: '#0F172A', preview: 'bg-[#0F172A]' },
+    { id: 'snow', name: '积雪', color: '#F9FAFB', preview: 'bg-[#F9FAFB]' },
+    { id: 'obsidian', name: '曜石', color: '#171717', preview: 'bg-[#171717]' },
+    { id: 'silk', name: '蚕丝', color: '#F8F7F3', preview: 'bg-[#F8F7F3]' },
   ];
 
   const currentFontValue = fonts.find(f => f.id === dateFont)?.value || 'var(--font-serif)';
@@ -417,22 +514,40 @@ export default function App() {
   
   const isThemeDark = ['dark', 'technical'].includes(theme);
   
+  const hexToRgb = (hex: string): string => {
+    if (!hex) return '0, 0, 0';
+    let h = hex.replace('#', '');
+    if (h.length === 3) {
+      h = h.split('').map(char => char + char).join('');
+    }
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return isNaN(r) ? '0, 0, 0' : `${r}, ${g}, ${b}`;
+  };
+
   const schemeStyles = useMemo(() => {
+    let styles: any = {};
     if (scheme === 'custom' && customPrimaryColor) {
-      return { 
+      styles = { 
         '--color-primary': customPrimaryColor,
         '--border-accent': customPrimaryColor,
         '--color-text': customPrimaryColor,
         '--color-muted': customPrimaryColor
       };
+    } else {
+      const currentSchemeData = colorSchemes.find(s => s.id === scheme);
+      styles = currentSchemeData ? (isThemeDark ? currentSchemeData.dark : currentSchemeData.light) || {} : {};
     }
-    const currentSchemeData = colorSchemes.find(s => s.id === scheme);
-    const styles = currentSchemeData ? (isThemeDark ? currentSchemeData.dark : currentSchemeData.light) || {} : {};
     
-    // Ensure --border-accent is set if not present but --color-primary is (for backward compatibility or missing data)
+    // Ensure --border-accent is set if not present but --color-primary is
     if (styles['--color-primary'] && !styles['--border-accent']) {
       styles['--border-accent'] = styles['--color-primary'];
     }
+
+    // Extract primary color for RGB variable usage in filters/shadows
+    const primary = styles['--color-primary'] || styles['--border-accent'] || '#000000';
+    styles['--color-primary-rgb'] = hexToRgb(primary);
     
     return styles;
   }, [scheme, customPrimaryColor, isThemeDark]);
@@ -472,7 +587,7 @@ export default function App() {
     : 'bg-white/80 text-black border-gray-200';
   const tabActiveClass = isDarkBg ? 'bg-white/20 text-white' : 'bg-white text-black shadow-sm';
   const itemHoverClass = isDarkBg ? 'hover:bg-white/10' : 'hover:bg-gray-100/50';
-  const itemActiveClass = isDarkBg ? 'bg-white text-black' : 'bg-black text-white';
+  const itemActiveClass = isDarkBg ? 'bg-white text-black' : 'bg-white text-black ring-2 ring-rose-600 shadow-sm';
 
   return (
     <div 
@@ -481,7 +596,7 @@ export default function App() {
       style={{ 
         backgroundColor: bgPageValue || 'var(--bg-page)', 
         ...schemeStyles,
-        '--bg-page': bgPageValue || ''
+        '--bg-page': bgPageValue || undefined
       } as React.CSSProperties}
     >
       <motion.main 
@@ -489,7 +604,7 @@ export default function App() {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className={`calendar-container w-full max-w-[560px] min-h-[500px] md:aspect-[3/4] border relative p-7 md:p-12 overflow-hidden select-none flex flex-col transition-all duration-500 ${hasShadow ? 'shadow-[0_40px_100px_rgba(0,0,0,0.12)]' : 'shadow-none'}`}
+        className={`calendar-container w-full max-w-[560px] min-h-[500px] md:aspect-[3/4] border relative p-7 md:p-12 ${dayStyle === 'shadow' ? '' : 'overflow-hidden'} select-none flex flex-col transition-all duration-500 ${hasShadow ? 'shadow-[0_40px_100px_rgba(0,0,0,0.12)]' : 'shadow-none'}`}
         id="calendar-container"
         style={{ 
           '--dynamic-font': currentFontValue,
@@ -509,7 +624,7 @@ export default function App() {
           </div>
           <div className="text-right" id="header-advice">
             <div className="text-[10px] text-[var(--color-muted)] uppercase tracking-[1px] mb-1">今日宜</div>
-            <div className="text-sm font-semibold" style={{ fontFamily: currentQuoteFontValue }}>{calendarData.advice}</div>
+            <div className="text-sm font-semibold" style={{ fontFamily: currentQuoteFontValue, fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined }}>{calendarData.advice}</div>
           </div>
         </header>
 
@@ -525,9 +640,15 @@ export default function App() {
           </div>
 
           <h1 
-            className="date-number" 
+            className={`date-number date-style-${dayStyle}`} 
             id="center-date"
-            style={{ fontFamily: currentFontValue }}
+            data-date={calendarData.day}
+            style={{ 
+              fontFamily: currentFontValue, 
+              '--date-font-size': dayFontSize ? `${dayFontSize}px` : undefined,
+              '--card-border-color': customBorderColor || (scheme === 'original' ? 'rgba(0,0,0,0.1)' : undefined),
+              '--card-border-width': borderWidth !== undefined ? `${borderWidth}px` : undefined
+            } as React.CSSProperties}
           >
             {calendarData.day}
           </h1>
@@ -541,7 +662,7 @@ export default function App() {
           <div 
             className={`quote-text mb-5 ${theme === 'classic' ? 'text-center max-w-[360px] mx-auto' : ''}`} 
             id="quote-text"
-            style={{ fontFamily: currentQuoteFontValue }}
+            style={{ fontFamily: currentQuoteFontValue, fontSize: quoteFontSize ? `${quoteFontSize}px` : undefined }}
           >
             {calendarData.quote.text}
           </div>
@@ -563,50 +684,100 @@ export default function App() {
         <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
       </motion.main>
 
-      {/* Global Download Progress Overlay */}
+      {/* Global Download Progress Overlay (Circular Design) */}
       <AnimatePresence>
         {isDownloading && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ 
+              opacity: 1,
+              backgroundColor: ["rgba(0,0,0,0.9)", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.4)"],
+              backdropFilter: ["blur(20px)", "blur(12px)", "blur(4px)"]
+            }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md"
+            transition={{
+              backgroundColor: { duration: 12, times: [0, 0.1, 1], ease: "linear" },
+              backdropFilter: { duration: 12, times: [0, 0.1, 1], ease: "linear" },
+              opacity: { duration: 0.3 }
+            }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white p-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 max-w-[280px] w-full mx-4"
-            >
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 border-4 border-blue-50 rounded-full" />
-                <motion.div
-                  className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            <div className="relative flex items-center justify-center">
+              {/* Circular Progress Path (Background) */}
+              <svg className="absolute w-[260px] h-[260px] rotate-[-90deg]">
+                <circle
+                  cx="130"
+                  cy="130"
+                  r="128"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Download size={24} className="text-blue-500" />
-                </div>
-              </div>
-              
-              <div className="text-center space-y-1.5">
-                <h3 className="text-[15px] font-bold text-gray-900">正在生成高清图</h3>
-                <p className="text-[11px] text-gray-500 leading-relaxed px-2">
-                  系统正在为您排版并合成高分辨率视图，请稍候...
-                </p>
-              </div>
+                {/* Animated Progress Path */}
+                <motion.circle
+                  cx="130"
+                  cy="130"
+                  r="128"
+                  fill="none"
+                  stroke="#3B82F6"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: [0, 0.75, 0.99] }}
+                  transition={{ 
+                    duration: 12, 
+                    times: [0, 0.2, 1],
+                    ease: "linear" 
+                  }}
+                  style={{
+                    filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
+                  }}
+                />
+              </svg>
 
-              {/* Fake Progress Bar to reduce anxiety */}
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              {/* Main Circular Window */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="w-[240px] h-[240px] bg-white/10 backdrop-blur-2xl rounded-full shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col items-center justify-center gap-4 border border-white/20 relative overflow-hidden"
+              >
+                {/* Inner decorative light */}
                 <motion.div 
-                  className="h-full bg-blue-500"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "95%" }}
-                  transition={{ duration: 3, ease: "easeOut" }}
+                  className="absolute inset-0 bg-gradient-to-tr from-rose-600/10 to-transparent"
+                  animate={{ 
+                    opacity: [0.3, 0.6, 0.3],
+                    scale: [1, 1.1, 1] 
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
                 />
-              </div>
-            </motion.div>
+
+                <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/40">
+                    <Download size={20} className="text-white" />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <h3 className="text-[14px] font-bold text-white tracking-widest uppercase">HD Rendering</h3>
+                    <p className="text-[10px] text-white/60 leading-relaxed font-medium">
+                      正在合成视网膜级画面<br/>请保持页面开启
+                    </p>
+                  </div>
+
+                  {/* Pulse active indicator */}
+                  <div className="flex gap-1.5 items-center justify-center pt-1">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1 h-1 bg-blue-400 rounded-full"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -680,49 +851,49 @@ export default function App() {
                   <div className={`grid grid-cols-4 rounded-2xl p-1 mb-1 gap-0.5 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
                     <button 
                       onClick={() => setActiveTab('theme')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-40'}`}
                     >
                       风格
                     </button>
                     <button 
                       onClick={() => setActiveTab('scheme')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'scheme' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'scheme' ? tabActiveClass : 'opacity-40'}`}
                     >
                       配色
                     </button>
                     <button 
                       onClick={() => setActiveTab('background')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'background' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'background' ? tabActiveClass : 'opacity-40'}`}
                     >
                       背景
                     </button>
                     <button 
                       onClick={() => setActiveTab('card')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'card' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'card' ? tabActiveClass : 'opacity-40'}`}
                     >
                       卡片
                     </button>
                     <button 
                       onClick={() => setActiveTab('border')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'border' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'border' ? tabActiveClass : 'opacity-40'}`}
                     >
                       边框
                     </button>
                     <button 
                       onClick={() => setActiveTab('font')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'font' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'font' ? tabActiveClass : 'opacity-40'}`}
                     >
                       日期
                     </button>
                     <button 
                       onClick={() => setActiveTab('quote')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'quote' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'quote' ? tabActiveClass : 'opacity-40'}`}
                     >
                       金句
                     </button>
                     <button 
                       onClick={() => setActiveTab('setting')}
-                      className={`text-[9px] py-1.5 rounded-xl transition-all ${activeTab === 'setting' ? tabActiveClass : 'opacity-40'}`}
+                      className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'setting' ? tabActiveClass : 'opacity-40'}`}
                     >
                       设置
                     </button>
@@ -730,96 +901,94 @@ export default function App() {
 
                   {/* Theme List */}
                   {activeTab === 'theme' && (
-                    <div className="flex flex-col gap-1 max-h-[260px] overflow-y-auto pr-1">
-                      {themes.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => handleThemeChange(t.id)}
-                          className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                            theme === t.id ? itemActiveClass : `${itemHoverClass}`
-                          }`}
-                        >
-                          <div className={`w-3.5 h-3.5 rounded-full border ${t.class}`} />
-                          {t.name}
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-5 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 pt-2 pb-4">
+                        {themes.map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => handleThemeChange(t.id)}
+                              className={`flex flex-col items-start gap-1 p-3.5 rounded-2xl text-xs transition-all border ${
+                                theme === t.id 
+                                  ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
+                                  : 'bg-black/5 border-transparent hover:bg-black/10'
+                              }`}
+                            >
+                              <span className="text-sm truncate w-full text-left font-medium">{t.name}</span>
+                            </button>
+                          ))}
+                        </div>
                     </div>
                   )}
 
-                  {/* Scheme List */}
+                   {/* Scheme List */}
                    {activeTab === 'scheme' && (
-                     <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto pr-1 pb-4">
-                       {colorSchemes.map((s) => (
-                         <button
-                           key={s.id}
-                           onClick={() => handleSchemeChange(s.id)}
-                           className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                             scheme === s.id ? itemActiveClass : `${itemHoverClass}`
-                           }`}
-                         >
-                           <div className={`w-3.5 h-3.5 rounded-full border ${s.bg}`} />
-                           {s.name}
-                         </button>
-                       ))}
+                     <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
+                       <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                         {colorSchemes.map((s) => (
+                           <button
+                             key={s.id}
+                             onClick={() => handleSchemeChange(s.id)}
+                             className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                               scheme === s.id ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                             } ${s.bg}`}
+                             title={s.name}
+                           />
+                         ))}
+                       </div>
                        <div className="mt-2 border-t border-black/5 pt-3 px-1">
-                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义颜色</div>
-                         <button
-                           onClick={() => handleCustomPrimaryChange(customPrimaryColor || '#3B82F6')}
-                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all mb-2 ${
+                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义配色方案</div>
+                         <label
+                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
                              scheme === 'custom' ? itemActiveClass : `${itemHoverClass}`
                            }`}
                          >
-                           <div 
-                             className="w-4 h-4 rounded-full border border-black/10" 
-                             style={{ backgroundColor: customPrimaryColor || '#3B82F6' }} 
+                           <input 
+                             type="color" 
+                             value={customPrimaryColor || '#3B82F6'} 
+                             onChange={(e) => handleCustomPrimaryChange(e.target.value)}
+                             className="sr-only"
                            />
-                           自定义方案
-                         </button>
-                         <input 
-                           type="color" 
-                           value={customPrimaryColor || '#3B82F6'} 
-                           onChange={(e) => handleCustomPrimaryChange(e.target.value)}
-                           className="w-full h-8 p-0 rounded-lg overflow-hidden border border-black/10 cursor-pointer bg-white shadow-sm hover:shadow-md transition-all sm:h-10"
-                         />
+                           <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${scheme === 'custom' ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customPrimaryColor || '#3B82F6' }} />
+                           自定义颜色
+                            {scheme === 'custom' && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
+                         </label>
                        </div>
                      </div>
                    )}
 
                   {/* Background List */}
                    {activeTab === 'background' && (
-                     <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto pr-1 pb-4">
-                       {backgrounds.map((b) => (
-                         <button
-                           key={b.id}
-                           onClick={() => handleBgChange(b.id)}
-                           className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                             bgId === b.id ? itemActiveClass : `${itemHoverClass}`
-                           }`}
-                         >
-                           <div className={`w-3.5 h-3.5 rounded-full border ${b.preview}`} />
-                           {b.name}
-                         </button>
-                       ))}
-                       <div className="mt-2 border-t border-black/5 pt-3 px-1">
+                     <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
+                       <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                         {backgrounds.map((b) => (
+                           <button
+                             key={b.id}
+                             onClick={() => handleBgChange(b.id)}
+                             className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                               bgId === b.id ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                             } ${b.preview}`}
+                             title={b.name}
+                             style={{ backgroundColor: b.color }}
+                           />
+                         ))}
+                       </div>
+                       <div className="mt-2 border-t border-black/5 pt-4 px-1">
                          <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义背景色</div>
-                         <button
-                           onClick={() => handleCustomAppBgChange(customAppBgColor || '#F5F5F5')}
-                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all mb-2 ${
+                         <label
+                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
                              bgId === 'custom-color' ? itemActiveClass : `${itemHoverClass}`
                            }`}
                          >
-                           <div 
-                             className="w-4 h-4 rounded-full border border-black/10" 
-                             style={{ backgroundColor: customAppBgColor || '#F5F5F5' }} 
+                           <input 
+                             type="color" 
+                             value={customAppBgColor || '#F5F5F5'} 
+                             onChange={(e) => handleCustomAppBgChange(e.target.value)}
+                             className="sr-only"
                            />
+                           <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${bgId === 'custom-color' ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customAppBgColor || '#F5F5F5' }} />
                            自定义颜色
-                         </button>
-                         <input 
-                           type="color" 
-                           value={customAppBgColor || '#F5F5F5'} 
-                           onChange={(e) => handleCustomAppBgChange(e.target.value)}
-                           className="w-full h-8 p-0 rounded-lg overflow-hidden border border-black/10 cursor-pointer bg-white shadow-sm hover:shadow-md transition-all sm:h-10"
-                         />
+                            {bgId === 'custom-color' && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
+                         </label>
                        </div>
                      </div>
                    )}
@@ -827,65 +996,76 @@ export default function App() {
                    {/* Card Background Tab */}
                    {activeTab === 'card' && (
                      <div className="flex flex-col gap-4 max-h-[350px] overflow-y-auto pr-1 pb-4">
-                        <div className="px-2">
-                          <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2">卡片背景色</div>
-                          <div className="grid grid-cols-4 gap-2 mb-3">
-                            {cardBgs.map((bg) => (
-                              <button
-                                key={bg.id}
-                                onClick={() => handleCardBgChange(bg.color)}
-                                className={`h-8 rounded-lg border transition-all relative flex items-center justify-center ${
-                                  cardBg === bg.color ? 'border-blue-500 ring-2 ring-blue-500/20 scale-105' : 'border-black/5 hover:border-black/20'
-                                }`}
-                                style={{ backgroundColor: bg.color }}
-                                title={bg.label}
-                              >
-                                <span className={`text-[8px] font-medium ${['#1A1A1A'].includes(bg.color) ? 'text-white' : 'text-black'} opacity-0 hover:opacity-100`}>
-                                  {bg.label}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                          <div className="border-t border-black/5 pt-3">
-                            <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2">自定义卡片背景</div>
-                            <input 
-                              type="color" 
-                              value={customCardBgColor || '#FFFFFF'} 
-                              onChange={(e) => handleCustomCardBgChange(e.target.value)}
-                              className="w-full h-10 p-0 rounded-lg overflow-hidden border border-black/10 cursor-pointer bg-white shadow-sm hover:shadow-md transition-all"
-                            />
-                          </div>
-                        </div>
+                       <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                         {cardBgs.map((bg) => (
+                           <button
+                             key={bg.id}
+                             onClick={() => handleCardBgChange(bg.color)}
+                             className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                               cardBg === bg.color && !isCustomCardBg ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                             }`}
+                             style={{ backgroundColor: bg.color }}
+                             title={bg.label}
+                           />
+                         ))}
+                       </div>
+                       <div className="mt-2 border-t border-black/5 pt-4 px-1">
+                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义卡片背景</div>
+                         <label
+                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
+                             isCustomCardBg ? itemActiveClass : `${itemHoverClass}`
+                           }`}
+                         >
+                           <input 
+                             type="color" 
+                             value={customCardBgColor || '#FFFFFF'} 
+                             onChange={(e) => handleCustomCardBgChange(e.target.value)}
+                             className="sr-only"
+                           />
+                           <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${isCustomCardBg ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customCardBgColor || '#FFFFFF' }} />
+                           自定义颜色
+                            {isCustomCardBg && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
+                         </label>
+                       </div>
                      </div>
                    )}
 
                    {/* Border Tab */}
                    {activeTab === 'border' && (
                      <div className="flex flex-col gap-4 max-h-[350px] overflow-y-auto pr-1 pb-4">
-                        <div className="px-2">
-                          <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-3">边框颜色</div>
-                          <div className="flex gap-2 flex-wrap mb-4">
-                            {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B'].map(c => (
-                              <button
-                                key={c}
-                                onClick={() => handleBorderColorChange(c)}
-                                className={`w-6 h-6 rounded-lg border-2 transition-all ${borderColor === c ? 'border-blue-500 scale-110 shadow-sm' : 'border-black/5 hover:border-black/20'}`}
-                                style={{ backgroundColor: c }}
-                              />
-                            ))}
-                          </div>
+                        <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                          {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B'].map(c => (
+                            <button
+                              key={c}
+                              onClick={() => handleBorderColorChange(c)}
+                              className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                                borderColor === c && !isCustomBorder ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                              }`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
                           
-                          <div className="border-t border-black/5 pt-3 mb-4">
-                            <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2">自定义边框颜色</div>
+                        <div className="mt-2 border-t border-black/5 pt-4 px-1">
+                          <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义边框颜色</div>
+                          <label
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
+                              isCustomBorder ? itemActiveClass : `${itemHoverClass}`
+                            }`}
+                          >
                             <input 
                               type="color" 
                               value={customBorderColor} 
-                              onChange={(e) => handleBorderColorChange(e.target.value)}
-                              className="w-full h-10 p-0 rounded-lg overflow-hidden border border-black/10 cursor-pointer bg-white shadow-sm hover:shadow-md transition-all"
+                              onChange={(e) => handleBorderColorChange(e.target.value, true)}
+                              className="sr-only"
                             />
-                          </div>
+                            <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${isCustomBorder ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customBorderColor }} />
+                            自定义颜色
+                            {isCustomBorder && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
+                          </label>
+                        </div>
 
-                          <div className="space-y-4 pt-2">
+                        <div className="space-y-4 pt-4 px-1">
                             <div className="flex flex-col gap-2">
                               <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">圆角半径 ({borderRadius !== undefined ? `${borderRadius}px` : '主题默认'})</span>
@@ -896,7 +1076,7 @@ export default function App() {
                                 max="60" 
                                 value={borderRadius !== undefined ? borderRadius : 4} 
                                 onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
-                                className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-rose-600"
                               />
                             </div>
 
@@ -910,38 +1090,112 @@ export default function App() {
                                 max="10" 
                                 value={borderWidth !== undefined ? borderWidth : 1} 
                                 onChange={(e) => handleBorderWidthChange(parseInt(e.target.value))}
-                                className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-rose-600"
                               />
                             </div>
                           </div>
-                        </div>
                      </div>
                    )}
 
                   {/* Font List */}
                   {activeTab === 'font' && (
-                    <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto pr-1">
-                      {fonts.map((f) => (
-                        <button
-                          key={f.id}
-                          onClick={() => handleFontChange(f.id)}
-                          className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs transition-all ${
-                            dateFont === f.id ? itemActiveClass : `${itemHoverClass}`
-                          }`}
-                        >
-                          <span className="text-lg w-8 overflow-hidden" style={{ fontFamily: f.value }}>88</span>
-                          <span className="flex-1 text-left">{f.name}</span>
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-5 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {/* Typography Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <Type className="w-3.5 h-3.5 opacity-50" />
+                          <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">字体选择</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                          {fonts.map((f) => (
+                            <button
+                              key={f.id}
+                              onClick={() => handleFontChange(f.id)}
+                              className={`flex flex-col items-start gap-1 p-3 rounded-2xl text-xs transition-all border ${
+                                dateFont === f.id 
+                                  ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
+                                  : 'bg-black/5 border-transparent hover:bg-black/10'
+                              }`}
+                            >
+                              <span className="text-sm truncate w-full text-left" style={{ fontFamily: f.value }}>{f.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Size Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <Baseline className="w-3.5 h-3.5 opacity-50" />
+                          <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">排版尺寸</span>
+                        </div>
+                        <div className="bg-black/5 rounded-2xl p-3 space-y-3">
+                          <div className="flex gap-1.5">
+                            {[120, 160, 200, 280, 360].map((size) => (
+                              <button
+                                key={size}
+                                onClick={() => handleDayFontSizeChange(size)}
+                                className={`flex-1 h-9 rounded-xl text-[10px] font-bold transition-all ${
+                                  dayFontSize === size || (!dayFontSize && size === 200)
+                                    ? 'bg-white text-rose-700 shadow-sm'
+                                    : 'text-black/40 hover:text-black/80'
+                                }`}
+                              >
+                                {size === 200 ? '默认' : size}
+                              </button>
+                            ))}
+                          </div>
+                          <input 
+                            type="range" 
+                            min="80" 
+                            max="500" 
+                            step="10"
+                            value={dayFontSize || 200} 
+                            onChange={(e) => handleDayFontSizeChange(parseInt(e.target.value))}
+                            className="w-full h-1 bg-black/10 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Style Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <Layers className="w-3.5 h-3.5 opacity-50" />
+                          <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">展现样式</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { id: 'standard', name: '默认' },
+                            { id: 'shadow', name: '投影' },
+                            { id: 'glow', name: '流光' },
+                            { id: 'hollow', name: '描边' }
+                          ].map((s) => (
+                            <button
+                              key={s.id}
+                              onClick={() => handleDayStyleChange(s.id)}
+                              className={`flex items-center justify-center h-12 rounded-2xl transition-all border font-medium ${
+                                dayStyle === s.id
+                                  ? 'bg-rose-600 border-rose-600 text-white shadow-md'
+                                  : 'bg-black/5 border-transparent hover:bg-black/10'
+                              }`}
+                            >
+                              <span className="text-[11px]">{s.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
 
                   {/* Quote Font List */}
                   {activeTab === 'quote' && (
-                    <div className="flex flex-col gap-1 pr-1">
+                    <div className="flex flex-col gap-5 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       {/* Sync Switch */}
-                      <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl mb-1 ${isDarkBg ? 'bg-white/5' : 'bg-gray-50'}`}>
-                        <span className="text-[10px] opacity-70">全局字体同步</span>
+                      <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border ${isDarkBg ? 'bg-white/5 border-white/5' : 'bg-black/5 border-transparent'}`}>
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className={`w-3 h-3 ${isFontSync ? 'text-green-500' : 'opacity-40'}`} />
+                          <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest">全局字体同步</span>
+                        </div>
                         <button 
                           onClick={toggleFontSync}
                           className={`w-8 h-4 rounded-full relative transition-colors ${isFontSync ? 'bg-green-500' : 'bg-gray-400'}`}
@@ -953,19 +1207,82 @@ export default function App() {
                         </button>
                       </div>
 
-                      <div className="max-h-[240px] overflow-y-auto flex flex-col gap-1">
-                        {quoteFonts.map((f) => (
-                          <button
-                            key={f.id}
-                            onClick={() => handleQuoteFontChange(f.id)}
-                            className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-xs transition-all ${
-                              quoteFont === f.id ? itemActiveClass : `${itemHoverClass}`
-                            }`}
-                          >
-                            <span className="text-base w-8 overflow-hidden" style={{ fontFamily: f.value }}>文</span>
-                            <span className="flex-1 text-left">{f.name}</span>
-                          </button>
-                        ))}
+                      {/* Font Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <Type className="w-3.5 h-3.5 opacity-50" />
+                          <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">金句字体</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                          {quoteFonts.map((f) => (
+                            <button
+                              key={f.id}
+                              onClick={() => handleQuoteFontChange(f.id)}
+                              className={`flex flex-col items-start gap-1 p-3 rounded-2xl text-xs transition-all border ${
+                                quoteFont === f.id 
+                                  ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
+                                  : 'bg-black/5 border-transparent hover:bg-black/10'
+                              }`}
+                            >
+                              <span className="text-sm truncate w-full text-left" style={{ fontFamily: f.value }}>{f.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 px-1">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 px-1">
+                            <Baseline className="w-3.5 h-3.5 opacity-50" />
+                            <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">字号调节</span>
+                          </div>
+                          
+                          <div className="bg-black/5 rounded-2xl p-3 space-y-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between px-1">
+                                <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">金句字号</span>
+                                <span className="text-[10px] font-bold text-rose-600">{quoteFontSize || 18}px</span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                {[14, 18, 24, 32, 40].map((size) => (
+                                  <button
+                                    key={size}
+                                    onClick={() => handleQuoteFontSizeChange(size)}
+                                    className={`flex-1 h-8 rounded-xl text-[10px] font-bold transition-all ${
+                                      quoteFontSize === size || (!quoteFontSize && size === 18)
+                                        ? 'bg-white text-rose-700 shadow-sm'
+                                        : 'text-black/40 hover:text-black/80'
+                                    }`}
+                                  >
+                                    {size === 18 ? '默认' : size}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between px-1">
+                                <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">今日宜字号</span>
+                                <span className="text-[10px] font-bold text-rose-600">{adviceFontSize || 14}px</span>
+                              </div>
+                              <div className="flex gap-1.5">
+                                {[10, 14, 18, 22, 26].map((size) => (
+                                  <button
+                                    key={size}
+                                    onClick={() => handleAdviceFontSizeChange(size)}
+                                    className={`flex-1 h-8 rounded-xl text-[10px] font-bold transition-all ${
+                                      adviceFontSize === size || (!adviceFontSize && size === 14)
+                                        ? 'bg-white text-rose-700 shadow-sm'
+                                        : 'text-black/40 hover:text-black/80'
+                                    }`}
+                                  >
+                                    {size === 14 ? '默认' : size}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -980,7 +1297,7 @@ export default function App() {
                         <span className="text-[10px] font-medium opacity-60">卡片阴影</span>
                         <button 
                           onClick={() => handleShadowChange(!hasShadow)}
-                          className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-blue-500' : 'bg-gray-400'}`}
+                          className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-rose-600' : 'bg-gray-400'}`}
                         >
                           <motion.div 
                             animate={{ x: hasShadow ? 18 : 2 }}
