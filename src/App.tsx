@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Solar, Lunar } from 'lunar-javascript';
 import { QUOTES, ADVICE_POOL } from './data/quotes';
 import { Palette, X, Download, RefreshCw, RotateCcw, Type, Baseline, Layers, Check } from 'lucide-react';
-import { toBlob } from 'html-to-image';
+import { toCanvas } from 'html-to-image';
 
 const getHash = (str: string) => {
   let hash = 0;
@@ -361,48 +361,6 @@ export default function App() {
     };
   }, [now, theme, randomSeed]);
 
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleDownload = async () => {
-    const node = document.getElementById('calendar-container');
-    if (!node || isDownloading) return;
-
-    setIsDownloading(true);
-    try {
-      // 稍微延长一点等待时间，确保进度条的最初动力感已经建立
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 使用 toBlob 替换 toPng 以获得更快的生成速度和更低的内存占用
-      const blob = await toBlob(node, { 
-        pixelRatio: 2, 
-        backgroundColor: getComputedStyle(node).backgroundColor,
-        cacheBust: false, 
-        skipFonts: false,
-        style: {
-          transform: 'scale(1)', 
-        }
-      });
-      
-      if (!blob) throw new Error('Failed to generate image');
-      
-      const link = document.createElement('a');
-      link.download = `Du-Almanac-${calendarData.year}${calendarData.monthName}${calendarData.day}.png`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      
-      // 释放 URL 对象
-      setTimeout(() => URL.revokeObjectURL(link.href), 100);
-      
-      // 添加一个完成后的短延迟，让用户看到进度条满了，减少突兀感
-      await new Promise(resolve => setTimeout(resolve, 600));
-    } catch (err) {
-      console.error('Download failed:', err);
-      alert('下载失败，请稍后重试或尝试在桌面端操作。');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   const handleRandomQuote = () => {
     const newSeed = Math.floor(Math.random() * 1000000);
     setRandomSeed(newSeed);
@@ -605,6 +563,79 @@ export default function App() {
     
     return styles;
   }, [scheme, customPrimaryColor, isThemeDark]);
+
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const primaryColor = useMemo(() => {
+    return schemeStyles['--color-primary'] || schemeStyles['--border-accent'] || (isThemeDark ? '#FDA4AF' : '#E11D48');
+  }, [schemeStyles, isThemeDark]);
+
+  const handleDownload = async () => {
+    const node = document.getElementById('calendar-container');
+    if (!node || isDownloading) return;
+
+    setIsDownloading(true);
+    
+    // Create a timeout promise to prevent indefinite hanging
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Download timeout')), 25000)
+    );
+
+    try {
+      // 稍微延长一点等待时间，并确保布局稳定
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 使用 toCanvas 提高兼容性
+      const canvas = await Promise.race([
+        toCanvas(node, { 
+          pixelRatio: 2, 
+          backgroundColor: getComputedStyle(node).backgroundColor || '#ffffff',
+          cacheBust: true,
+          style: {
+            transform: 'scale(1)', 
+          },
+          filter: (domNode) => {
+            if (domNode instanceof HTMLElement && domNode.classList.contains('download-overlay')) {
+              return false;
+            }
+            return true;
+          }
+        }),
+        timeoutPromise
+      ]) as HTMLCanvasElement;
+      
+      if (!canvas) throw new Error('Failed to generate canvas');
+
+      // 将 canvas 转换为 blob
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+      
+      if (!blob || blob.size < 100) throw new Error('Generated image is empty');
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `Du-Almanac-${calendarData.year}${calendarData.monthName}${calendarData.day}.png`;
+      link.href = url;
+      link.target = '_blank';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // 延迟清理以确保下载触发
+      setTimeout(() => {
+        if (link.parentNode) document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 500);
+      
+      // 添加一个完成后的短延迟
+      await new Promise(resolve => setTimeout(resolve, 600));
+    } catch (err) {
+      console.error('Download failed:', err);
+      const errorMsg = err instanceof Error ? err.message : '未知错误';
+      alert(`下载失败 (${errorMsg})。建议：\n1. 尝试刷新页面重试\n2. 在电脑版 Chrome/Safari 浏览器上操作\n3. 检查网络连接`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   
   const bgPageValue = useMemo(() => {
     if (bgId === 'custom-color' && customAppBgColor) return customAppBgColor;
@@ -790,7 +821,7 @@ export default function App() {
               backdropFilter: { duration: 12, times: [0, 0.1, 1], ease: "linear" },
               opacity: { duration: 0.3 }
             }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden download-overlay"
           >
             <div className="relative flex items-center justify-center">
               {/* Circular Progress Path (Background) */}
@@ -809,7 +840,7 @@ export default function App() {
                   cy="130"
                   r="128"
                   fill="none"
-                  stroke="#3B82F6"
+                  stroke={primaryColor}
                   strokeWidth="4"
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
@@ -820,7 +851,7 @@ export default function App() {
                     ease: "linear" 
                   }}
                   style={{
-                    filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
+                    filter: `drop-shadow(0 0 8px ${primaryColor})`
                   }}
                 />
               </svg>
@@ -834,7 +865,10 @@ export default function App() {
               >
                 {/* Inner decorative light */}
                 <motion.div 
-                  className="absolute inset-0 bg-gradient-to-tr from-rose-600/10 to-transparent"
+                  className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-transparent"
+                  style={{ 
+                    backgroundImage: `linear-gradient(to top right, ${primaryColor}20, transparent)` 
+                  }}
                   animate={{ 
                     opacity: [0.3, 0.6, 0.3],
                     scale: [1, 1.1, 1] 
@@ -843,12 +877,18 @@ export default function App() {
                 />
 
                 <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/40">
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
+                    style={{ 
+                      backgroundColor: primaryColor,
+                      boxShadow: `0 10px 15px -3px ${primaryColor}40`
+                    }}
+                  >
                     <Download size={20} className="text-white" />
                   </div>
                   
                   <div className="space-y-1">
-                    <h3 className="text-[14px] font-bold text-white tracking-widest uppercase">HD Rendering</h3>
+                    <h3 className="text-[14px] font-bold text-white tracking-widest uppercase">正在高清渲染</h3>
                     <p className="text-[10px] text-white/60 leading-relaxed font-medium">
                       正在合成视网膜级画面<br/>请保持页面开启
                     </p>
@@ -859,7 +899,8 @@ export default function App() {
                     {[0, 1, 2].map((i) => (
                       <motion.div
                         key={i}
-                        className="w-1 h-1 bg-blue-400 rounded-full"
+                        className="w-1 h-1 rounded-full"
+                        style={{ backgroundColor: primaryColor }}
                         animate={{ opacity: [0.3, 1, 0.3] }}
                         transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
                       />
