@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar, Lunar } from 'lunar-javascript';
 import { QUOTES, ADVICE_POOL } from './data/quotes';
@@ -45,6 +45,7 @@ export default function App() {
   const [customBorderColor, setCustomBorderColor] = useState<string>('');
   const [isCustomBorder, setIsCustomBorder] = useState(false);
   const [isCustomCardBg, setIsCustomCardBg] = useState(false);
+  const [cardTexture, setCardTexture] = useState('none');
 
   const cardBgs = [
     { id: 'white', color: '#FFFFFF', label: '纯白' },
@@ -52,10 +53,9 @@ export default function App() {
     { id: 'sepia', color: '#F4ECD8', label: '复古' },
     { id: 'dark', color: '#1A1A1A', label: '深邃' },
     { id: 'cream', color: '#F5F5DC', label: '奶油' },
-    { id: 'gray', color: '#F3F4F6', label: '浅灰' },
     { id: 'blue', color: '#EBF5FF', label: '淡蓝' },
     { id: 'green', color: '#F0FDF4', label: '浅艾' },
-    { id: 'cloud', color: '#F1F5F9', label: '云纹' },
+    { id: 'oat', color: '#F4F1EA', label: '燕麦' },
     { id: 'wheat', color: '#FBF8F1', label: '麦香' },
     { id: 'glacier', color: '#F0FDFA', label: '冰川' },
     { id: 'shell', color: '#FFFBF0', label: '贝耳' },
@@ -64,6 +64,36 @@ export default function App() {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'theme' | 'font' | 'quote' | 'scheme' | 'background' | 'card' | 'border' | 'setting'>('theme');
   const [randomSeed, setRandomSeed] = useState(0);
+
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const actionButtonsRef = useRef<HTMLDivElement>(null);
+
+  // Click away to close settings panel
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isSwitcherOpen) return;
+
+      const target = event.target as Node;
+      
+      // Check if click is inside the panel
+      if (panelRef.current?.contains(target)) return;
+      
+      // Check if click is inside the trigger button
+      if (triggerRef.current?.contains(target)) return;
+      
+      // Check if click is inside the action buttons (download, random)
+      if (actionButtonsRef.current?.contains(target)) return;
+
+      // If outside all of the above, close the panel
+      setIsSwitcherOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSwitcherOpen]);
   const now = new Date();
 
   // Load preferences from localStorage
@@ -246,6 +276,7 @@ export default function App() {
     setDayStyle('standard');
     setBorderColor('');
     setCardBg('');
+    setCardTexture('none');
     setScheme('original');
     setBgId('default');
     setIsFontSync(false);
@@ -355,7 +386,7 @@ export default function App() {
       if (!blob) throw new Error('Failed to generate image');
       
       const link = document.createElement('a');
-      link.download = `OWSPACE-${calendarData.year}${calendarData.monthName}${calendarData.day}.png`;
+      link.download = `Du-Almanac-${calendarData.year}${calendarData.monthName}${calendarData.day}.png`;
       link.href = URL.createObjectURL(blob);
       link.click();
       
@@ -382,7 +413,6 @@ export default function App() {
     { id: 'bold', name: '包豪斯', class: 'bg-[#E5E5E1] border-black' },
     { id: 'dark', name: '暗夜', class: 'bg-[#121212] border-gray-700' },
     { id: 'warm', name: '和风', class: 'bg-[#EDE0D4] border-[#D7CCC8]' },
-    { id: 'technical', name: '蓝图', class: 'bg-[#0A192F] border-[#64FFDA]' },
     { id: 'poster', name: '海报', class: 'bg-white border-red-600' },
     { id: 'traditional', name: '传统', class: 'bg-[#F4EBE2] border-[#B03A2E]' },
     { id: 'editorial', name: '社论', class: 'bg-white border-black' },
@@ -492,6 +522,27 @@ export default function App() {
       light: { '--bg-page': '#FEF2F2', '--bg-card': '#FFFFFF', '--color-text': '#7F1D1D', '--color-muted': '#991B1B', '--border-card': '#FEE2E2', '--border-accent': '#7F1D1D' },
       dark: { '--bg-page': '#450A0A', '--bg-card': '#7F1D1D', '--color-text': '#FCA5A5', '--color-muted': '#FECACA', '--border-card': '#991B1B', '--border-accent': '#FCA5A5' }
     },
+    { 
+      id: 'ebony', 
+      name: '乌木', 
+      bg: 'bg-[#1A1A1A]', 
+      light: { '--bg-page': '#F5F5F5', '--bg-card': '#FFFFFF', '--color-text': '#1A1A1A', '--color-muted': '#666666', '--border-card': '#E5E5E5', '--border-accent': '#1A1A1A' },
+      dark: { '--bg-page': '#0A0A0A', '--bg-card': '#121212', '--color-text': '#FFFFFF', '--color-muted': '#A0A0A0', '--border-card': '#1A1A1A', '--border-accent': '#FFFFFF' }
+    },
+    { 
+      id: 'clay', 
+      name: '粘土', 
+      bg: 'bg-[#8D6241]', 
+      light: { '--bg-page': '#FDF9F6', '--bg-card': '#FFFFFF', '--color-text': '#8D6241', '--color-muted': '#A6866D', '--border-card': '#F3E9E2', '--border-accent': '#8D6241' },
+      dark: { '--bg-page': '#1A120B', '--bg-card': '#2A1D12', '--color-text': '#C59A78', '--color-muted': '#A6866D', '--border-card': '#3D2A1B', '--border-accent': '#C59A78' }
+    },
+    { 
+      id: 'nordic', 
+      name: '北欧', 
+      bg: 'bg-[#2C3E50]', 
+      light: { '--bg-page': '#F0F4F7', '--bg-card': '#FFFFFF', '--color-text': '#2C3E50', '--color-muted': '#7F8C8D', '--border-card': '#D6DBDF', '--border-accent': '#2C3E50' },
+      dark: { '--bg-page': '#0C1117', '--bg-card': '#161B22', '--color-text': '#8B949E', '--color-muted': '#C9D1D9', '--border-card': '#30363D', '--border-accent': '#58A6FF' }
+    },
   ];
 
   const backgrounds = [
@@ -507,6 +558,9 @@ export default function App() {
     { id: 'snow', name: '积雪', color: '#F9FAFB', preview: 'bg-[#F9FAFB]' },
     { id: 'obsidian', name: '曜石', color: '#171717', preview: 'bg-[#171717]' },
     { id: 'silk', name: '蚕丝', color: '#F8F7F3', preview: 'bg-[#F8F7F3]' },
+    { id: 'cloud', name: '云中', color: '#E8EEF2', preview: 'bg-[#E8EEF2]' },
+    { id: 'dust', name: '烟粉', color: '#F4E7E7', preview: 'bg-[#F4E7E7]' },
+    { id: 'pine', name: '松针', color: '#DAE2D8', preview: 'bg-[#DAE2D8]' },
   ];
 
   const currentFontValue = fonts.find(f => f.id === dateFont)?.value || 'var(--font-serif)';
@@ -673,7 +727,7 @@ export default function App() {
 
         <footer className="mt-auto pt-3 md:pt-5 flex justify-between items-end border-t border-current/40" id="footer-main">
           <div className="text-[10px] font-black tracking-[3px] uppercase" id="brand">
-            OWSPACE
+            Du Almanac
           </div>
           <div className="text-right flex flex-col items-end gap-0.5" id="footer-day-year">
             <div className="text-xs font-bold">{calendarData.weekday}</div>
@@ -682,6 +736,42 @@ export default function App() {
         </footer>
 
         <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
+        {cardTexture === 'grain' && (
+          <div className="absolute inset-0 pointer-events-none opacity-[0.12] mix-blend-multiply" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+        )}
+        {cardTexture === 'linen' && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+            <div className="absolute -inset-[50px] opacity-[0.04]" style={{ 
+              background: `
+                repeating-radial-gradient(#000 0 0.0001%,#fff 0 0.0002%) 60% 60%/3000px 3000px,
+                repeating-conic-gradient(#000 0 0.0001%,#fff 0 0.0002%) 40% 40%/4000px 3000px
+              `,
+              backgroundBlendMode: 'difference',
+              filter: 'blur(1px) contrast(120) brightness(110)',
+            }} />
+          </div>
+        )}
+        {cardTexture === 'recycled' && (
+          <>
+            <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-100" style={{ 
+              backgroundImage: `
+                radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+                radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+                repeating-linear-gradient(
+                  0deg,
+                  rgba(0,0,0,0.03),
+                  rgba(0,0,0,0.03) 1px,
+                  transparent 1px,
+                  transparent 3px
+                )
+              `,
+              backgroundSize: '3px 3px, 5px 5px, auto'
+            }} />
+            <div className="absolute inset-0 pointer-events-none opacity-100" style={{ 
+              background: 'radial-gradient(ellipse at center, transparent 70%, rgba(200,180,120,0.15))' 
+            }} />
+          </>
+        )}
       </motion.main>
 
       {/* Global Download Progress Overlay (Circular Design) */}
@@ -789,6 +879,7 @@ export default function App() {
         onMouseLeave={() => setIsSidebarHovered(false)}
       >
         <motion.div 
+          ref={actionButtonsRef}
           variants={{
             hidden: { x: '100%', opacity: 0 },
             visible: { x: 0, opacity: 1 }
@@ -831,7 +922,7 @@ export default function App() {
             <RefreshCw size={20} />
           </motion.button>
 
-          <div className="relative">
+          <div className="relative" ref={triggerRef}>
             <button
               onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
               className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all ${mainBtnClass}`}
@@ -842,6 +933,7 @@ export default function App() {
             <AnimatePresence>
               {isSwitcherOpen && (
                 <motion.div 
+                  ref={panelRef}
                   initial={{ opacity: 0, x: 20, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: 20, scale: 0.9 }}
@@ -899,134 +991,211 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* Theme List */}
+                                    {/* Theme List */}
                   {activeTab === 'theme' && (
                     <div className="flex flex-col gap-5 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 pt-2 pb-4">
                         {themes.map((t) => (
-                            <button
-                              key={t.id}
-                              onClick={() => handleThemeChange(t.id)}
-                              className={`flex flex-col items-start gap-1 p-3.5 rounded-2xl text-xs transition-all border ${
-                                theme === t.id 
-                                  ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
-                                  : 'bg-black/5 border-transparent hover:bg-black/10'
-                              }`}
-                            >
-                              <span className="text-sm truncate w-full text-left font-medium">{t.name}</span>
-                            </button>
-                          ))}
-                        </div>
+                          <button
+                            key={t.id}
+                            onClick={() => handleThemeChange(t.id)}
+                            className={`flex flex-col items-start gap-1 p-3.5 rounded-2xl text-xs transition-all border ${
+                              theme === t.id 
+                                ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
+                                : 'bg-black/5 border-transparent hover:bg-black/10'
+                            }`}
+                          >
+                            <span className="text-sm truncate w-full text-left font-medium">{t.name}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
 
-                   {/* Scheme List */}
-                   {activeTab === 'scheme' && (
-                     <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
-                       <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
-                         {colorSchemes.map((s) => (
-                           <button
-                             key={s.id}
-                             onClick={() => handleSchemeChange(s.id)}
-                             className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
-                               scheme === s.id ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
-                             } ${s.bg}`}
-                             title={s.name}
-                           />
-                         ))}
-                       </div>
-                       <div className="mt-2 border-t border-black/5 pt-3 px-1">
-                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义配色方案</div>
-                         <label
-                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                             scheme === 'custom' ? itemActiveClass : `${itemHoverClass}`
-                           }`}
-                         >
-                           <input 
-                             type="color" 
-                             value={customPrimaryColor || '#3B82F6'} 
-                             onChange={(e) => handleCustomPrimaryChange(e.target.value)}
-                             className="sr-only"
-                           />
-                           <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${scheme === 'custom' ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customPrimaryColor || '#3B82F6' }} />
-                           自定义颜色
-                            {scheme === 'custom' && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
-                         </label>
-                       </div>
-                     </div>
-                   )}
+                  {/* Scheme List */}
+                  {activeTab === 'scheme' && (
+                    <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
+                      <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                        {colorSchemes.map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => handleSchemeChange(s.id)}
+                            className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                              scheme === s.id ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                            } ${s.bg}`}
+                            title={s.name}
+                          />
+                        ))}
+                        <label
+                          className={`w-7 h-7 rounded-full bg-white border transition-all flex items-center justify-center mx-auto cursor-pointer shadow-sm ${
+                            scheme === 'custom' ? 'ring-2 ring-rose-600 ring-offset-1 border-transparent' : 'border-black/10 hover:scale-125'
+                          }`}
+                          title="自定义颜色"
+                        >
+                          <input 
+                            type="color" 
+                            value={customPrimaryColor || '#3B82F6'} 
+                            onChange={(e) => handleCustomPrimaryChange(e.target.value)}
+                            className="sr-only"
+                          />
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ 
+                              backgroundColor: customPrimaryColor || '#3B82F6',
+                              boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)"
+                            }} 
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Background List */}
-                   {activeTab === 'background' && (
-                     <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
-                       <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
-                         {backgrounds.map((b) => (
-                           <button
-                             key={b.id}
-                             onClick={() => handleBgChange(b.id)}
-                             className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
-                               bgId === b.id ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
-                             } ${b.preview}`}
-                             title={b.name}
-                             style={{ backgroundColor: b.color }}
-                           />
-                         ))}
-                       </div>
-                       <div className="mt-2 border-t border-black/5 pt-4 px-1">
-                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义背景色</div>
-                         <label
-                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                             bgId === 'custom-color' ? itemActiveClass : `${itemHoverClass}`
-                           }`}
-                         >
-                           <input 
-                             type="color" 
-                             value={customAppBgColor || '#F5F5F5'} 
-                             onChange={(e) => handleCustomAppBgChange(e.target.value)}
-                             className="sr-only"
-                           />
-                           <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${bgId === 'custom-color' ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customAppBgColor || '#F5F5F5' }} />
-                           自定义颜色
-                            {bgId === 'custom-color' && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
-                         </label>
-                       </div>
-                     </div>
-                   )}
-
-                   {/* Card Background Tab */}
+                  {activeTab === 'background' && (
+                    <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
+                      <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                        {backgrounds.map((b) => (
+                          <button
+                            key={b.id}
+                            onClick={() => handleBgChange(b.id)}
+                            className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                              bgId === b.id ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                            } ${b.preview}`}
+                            title={b.name}
+                            style={{ backgroundColor: b.color }}
+                          />
+                        ))}
+                        <label
+                          className={`w-7 h-7 rounded-full bg-white border transition-all flex items-center justify-center mx-auto cursor-pointer shadow-sm ${
+                            bgId === 'custom-color' ? 'ring-2 ring-rose-600 ring-offset-1 border-transparent' : 'border-black/10 hover:scale-125'
+                          }`}
+                          title="自定义配色"
+                        >
+                          <input 
+                            type="color" 
+                            value={customAppBgColor || '#F5F5F5'} 
+                            onChange={(e) => handleCustomAppBgChange(e.target.value)}
+                            className="sr-only"
+                          />
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ 
+                              backgroundColor: customAppBgColor || '#F5F5F5',
+                              boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)"
+                            }} 
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
+{/* Card Background Tab */}
                    {activeTab === 'card' && (
                      <div className="flex flex-col gap-4 max-h-[350px] overflow-y-auto pr-1 pb-4">
-                       <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
-                         {cardBgs.map((bg) => (
-                           <button
-                             key={bg.id}
-                             onClick={() => handleCardBgChange(bg.color)}
-                             className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
-                               cardBg === bg.color && !isCustomCardBg ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                       {/* 纸张纹理选择 */}
+                       <div className="px-1 pt-3">
+                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                           <Layers className="w-3 h-3" />
+                           纸张纹理
+                         </div>
+                         <div className="grid grid-cols-4 gap-2">
+                           {[
+                             { id: 'none', label: '无', class: 'bg-white' },
+                             { id: 'grain', label: '细砂', class: 'bg-gray-100' },
+                             { id: 'linen', label: '亚麻', class: 'bg-gray-200' },
+                             { id: 'recycled', label: '再生', class: 'bg-[#F4F1EA]' }
+                           ].map(t => (
+                             <button
+                               key={t.id}
+                               onClick={() => setCardTexture(t.id)}
+                               className={`flex flex-col items-center gap-1 p-1.5 rounded-xl border transition-all ${
+                                 cardTexture === t.id 
+                                   ? 'bg-rose-600 border-rose-600 text-white' 
+                                   : 'bg-black/5 border-transparent hover:bg-black/10'
+                               }`}
+                             >
+                               <div className={`w-full h-5 rounded-lg shadow-inner ${t.class} relative overflow-hidden`}>
+                                 {t.id === 'grain' && <div className="absolute inset-0 opacity-40" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />}
+                                 {t.id === 'linen' && (
+                                   <div className="absolute inset-0 opacity-[0.07] overflow-hidden">
+                                     <div className="absolute -inset-[20px]" style={{ 
+                                       background: `
+                                         repeating-radial-gradient(#000 0 0.0001%,#fff 0 0.0002%) 60% 60%/1000px 1000px,
+                                         repeating-conic-gradient(#000 0 0.0001%,#fff 0 0.0002%) 40% 40%/1000px 1000px
+                                       `,
+                                       backgroundBlendMode: 'difference',
+                                       filter: 'blur(0.5px) contrast(100) brightness(110)',
+                                       mixBlendMode: 'lighten'
+                                     }} />
+                                   </div>
+                                 )}
+                                 {t.id === 'recycled' && (
+                                   <div className="absolute inset-0 opacity-40">
+                                     <div className="absolute inset-0" style={{ 
+                                       backgroundImage: `radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), radial-gradient(rgba(0,0,0,0.08) 1px, transparent 1px)`,
+                                       backgroundSize: '2px 2px, 3px 3px'
+                                     }} />
+                                     <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 60%, rgba(200,180,120,0.4))' }} />
+                                   </div>
+                                 )}
+                               </div>
+                               <span className="text-[9px] font-bold uppercase tracking-tight">{t.label}</span>
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+
+                       <div className="px-1 mt-2">
+                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2">背景色</div>
+                         <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                           {cardBgs.map((bg) => (
+                             <button
+                               key={bg.id}
+                               onClick={() => handleCardBgChange(bg.color)}
+                               className={`w-7 h-7 rounded-full border transition-all flex items-center justify-center mx-auto ${
+                                 cardBg === bg.color && !isCustomCardBg ? 'ring-2 ring-rose-600 border-rose-600' : 'hover:scale-110 border-black/5 opacity-80 hover:opacity-100'
+                               }`}
+                               style={{ backgroundColor: bg.color }}
+                               title={bg.label}
+                             />
+                           ))}
+                           <label
+                             className={`w-7 h-7 rounded-full bg-white border transition-all flex items-center justify-center mx-auto cursor-pointer shadow-sm ${
+                               isCustomCardBg ? 'ring-2 ring-rose-600 ring-offset-1 border-transparent' : 'border-black/10 hover:scale-125'
                              }`}
-                             style={{ backgroundColor: bg.color }}
-                             title={bg.label}
-                           />
-                         ))}
+                             title="自定义卡片背景"
+                           >
+                             <input 
+                               type="color" 
+                               value={customCardBgColor || '#FFFFFF'} 
+                               onChange={(e) => handleCustomCardBgChange(e.target.value)}
+                               className="sr-only"
+                             />
+                             <div 
+                               className="w-4 h-4 rounded-full" 
+                               style={{ 
+                                 backgroundColor: customCardBgColor || '#FFFFFF',
+                                 boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)"
+                               }} 
+                             />
+                           </label>
+                         </div>
                        </div>
-                       <div className="mt-2 border-t border-black/5 pt-4 px-1">
-                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义卡片背景</div>
-                         <label
-                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                             isCustomCardBg ? itemActiveClass : `${itemHoverClass}`
-                           }`}
-                         >
-                           <input 
-                             type="color" 
-                             value={customCardBgColor || '#FFFFFF'} 
-                             onChange={(e) => handleCustomCardBgChange(e.target.value)}
-                             className="sr-only"
-                           />
-                           <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${isCustomCardBg ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customCardBgColor || '#FFFFFF' }} />
-                           自定义颜色
-                            {isCustomCardBg && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
-                         </label>
-                       </div>
+                        
+                        {/* 卡片效果 */}
+                        <div className="px-1 mt-4 pt-4 border-t border-black/5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">卡片阴影</span>
+                            <button 
+                              onClick={() => handleShadowChange(!hasShadow)}
+                              className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? "bg-rose-600" : "bg-gray-400"}`}
+                            >
+                              <motion.div 
+                                animate={{ x: hasShadow ? 18 : 2 }}
+                                className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
+                              />
+                            </button>
+                          </div>
+                        </div>
                      </div>
                    )}
 
@@ -1034,7 +1203,7 @@ export default function App() {
                    {activeTab === 'border' && (
                      <div className="flex flex-col gap-4 max-h-[350px] overflow-y-auto pr-1 pb-4">
                         <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
-                          {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B'].map(c => (
+                          {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'].map(c => (
                             <button
                               key={c}
                               onClick={() => handleBorderColorChange(c)}
@@ -1044,24 +1213,25 @@ export default function App() {
                               style={{ backgroundColor: c }}
                             />
                           ))}
-                        </div>
-                          
-                        <div className="mt-2 border-t border-black/5 pt-4 px-1">
-                          <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2 px-2">自定义边框颜色</div>
                           <label
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                              isCustomBorder ? itemActiveClass : `${itemHoverClass}`
+                            className={`w-7 h-7 rounded-full bg-white border transition-all flex items-center justify-center mx-auto cursor-pointer shadow-sm ${
+                              isCustomBorder ? 'ring-2 ring-rose-600 ring-offset-1 border-transparent' : 'border-black/10 hover:scale-125'
                             }`}
+                            title="自定义边框颜色"
                           >
                             <input 
                               type="color" 
-                              value={customBorderColor} 
+                              value={customBorderColor || '#000000'} 
                               onChange={(e) => handleBorderColorChange(e.target.value, true)}
                               className="sr-only"
                             />
-                            <div className={`w-7 h-7 rounded-full border shadow-sm transition-all ${isCustomBorder ? 'ring-2 ring-rose-600 border-rose-600' : 'border-white/20'}`} style={{ backgroundColor: customBorderColor }} />
-                            自定义颜色
-                            {isCustomBorder && <Check className="ml-auto w-3.5 h-3.5 text-rose-600" />}
+                            <div 
+                              className="w-4 h-4 rounded-full" 
+                              style={{ 
+                                backgroundColor: customBorderColor || '#000000',
+                                boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)"
+                              }} 
+                            />
                           </label>
                         </div>
 
@@ -1111,7 +1281,7 @@ export default function App() {
                             <button
                               key={f.id}
                               onClick={() => handleFontChange(f.id)}
-                              className={`flex flex-col items-start gap-1 p-3 rounded-2xl text-xs transition-all border ${
+                              className={`flex flex-col items-start gap-1 py-2 px-3 rounded-2xl text-xs transition-all border ${
                                 dateFont === f.id 
                                   ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
                                   : 'bg-black/5 border-transparent hover:bg-black/10'
@@ -1218,7 +1388,7 @@ export default function App() {
                             <button
                               key={f.id}
                               onClick={() => handleQuoteFontChange(f.id)}
-                              className={`flex flex-col items-start gap-1 p-3 rounded-2xl text-xs transition-all border ${
+                              className={`flex flex-col items-start gap-1 py-2 px-3 rounded-2xl text-xs transition-all border ${
                                 quoteFont === f.id 
                                   ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
                                   : 'bg-black/5 border-transparent hover:bg-black/10'
@@ -1291,21 +1461,10 @@ export default function App() {
                   {activeTab === 'setting' && (
                     <div className="flex flex-col gap-4 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-medium opacity-60 uppercase tracking-wider">交互与效果</span>
+                        <span className="text-[10px] font-medium opacity-60 uppercase tracking-wider">系统设置</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-medium opacity-60">卡片阴影</span>
-                        <button 
-                          onClick={() => handleShadowChange(!hasShadow)}
-                          className={`w-8 h-4 rounded-full transition-colors relative ${hasShadow ? 'bg-rose-600' : 'bg-gray-400'}`}
-                        >
-                          <motion.div 
-                            animate={{ x: hasShadow ? 18 : 2 }}
-                            className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
-                          />
-                        </button>
-                      </div>
-                      <div className="text-[9px] opacity-40 italic mt-4 mb-2">
+                      
+                      <div className="text-[9px] opacity-40 italic mt-2 mb-2">
                         更多自定义功能开发中...
                       </div>
                       <button
