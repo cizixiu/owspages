@@ -46,6 +46,7 @@ export default function App() {
   const [isCustomBorder, setIsCustomBorder] = useState(false);
   const [isCustomCardBg, setIsCustomCardBg] = useState(false);
   const [cardTexture, setCardTexture] = useState('none');
+  const [footerText, setFooterText] = useState('Your Day');
 
   const cardBgs = [
     { id: 'white', color: '#FFFFFF', label: '纯白' },
@@ -158,6 +159,9 @@ export default function App() {
 
     const savedCustomCardBg = localStorage.getItem('calendar-custom-card-bg');
     if (savedCustomCardBg) setCustomCardBgColor(savedCustomCardBg);
+
+    const savedFooterText = localStorage.getItem('calendar-footer-text');
+    if (savedFooterText) setFooterText(savedFooterText);
   }, []);
 
   const handleThemeChange = (newTheme: ThemeType) => {
@@ -196,6 +200,24 @@ export default function App() {
   const handleBgChange = (newBg: string) => {
     setBgId(newBg);
     localStorage.setItem('calendar-bg-id', newBg);
+  };
+
+  const handleFooterTextChange = (text: string) => {
+    // Limit to 20 Chinese or 40 English
+    // Simple heuristic: Chinese characters count as 2, English as 1
+    let totalLen = 0;
+    let slicedText = '';
+    for (let i = 0; i < text.length; i++) {
+      const charCode = text.charCodeAt(i);
+      totalLen += (charCode >= 0 && charCode <= 128) ? 1 : 2;
+      if (totalLen <= 40) {
+        slicedText += text[i];
+      } else {
+        break;
+      }
+    }
+    setFooterText(slicedText);
+    localStorage.setItem('calendar-footer-text', slicedText);
   };
 
   const handleCustomAppBgChange = (color: string) => {
@@ -282,6 +304,7 @@ export default function App() {
     setIsFontSync(false);
     setIsCustomBorder(false);
     setIsCustomCardBg(false);
+    setFooterText('Your Day');
     
     // Clear custom color inputs
     setCustomPrimaryColor('');
@@ -305,7 +328,8 @@ export default function App() {
       'calendar-quote-font-size',
       'calendar-advice-font-size',
       'calendar-day-font-size',
-      'calendar-day-style'
+      'calendar-day-style',
+      'calendar-footer-text'
     ];
     overrideKeys.forEach(key => localStorage.removeItem(key));
     
@@ -364,6 +388,46 @@ export default function App() {
   const handleRandomQuote = () => {
     const newSeed = Math.floor(Math.random() * 1000000);
     setRandomSeed(newSeed);
+  };
+
+  const handleRandomStyle = () => {
+    // 1. Random Theme
+    const themeList: ThemeType[] = ['classic', 'bold', 'dark', 'warm', 'technical', 'poster', 'traditional', 'editorial', 'vintage', 'zen', 'crimson'];
+    const newTheme = themeList[Math.floor(Math.random() * themeList.length)];
+    setTheme(newTheme);
+
+    // 2. Random Scheme
+    const schemes = ['default', 'monochrome', 'vibrant', 'soft', 'earth', 'midnight', 'rose', 'forest', 'original'];
+    const newScheme = schemes[Math.floor(Math.random() * schemes.length)];
+    setScheme(newScheme);
+
+    // 3. Random Fonts
+    const fontIds = ['serif', 'sans', 'pixel', 'technical', 'display', 'brush', 'classic'];
+    const newDateFont = fontIds[Math.floor(Math.random() * fontIds.length)] as any;
+    const newQuoteFont = fontIds[Math.floor(Math.random() * fontIds.length)] as any;
+    setDateFont(newDateFont);
+    setQuoteFont(newQuoteFont);
+
+    // 4. Random Layout Styles
+    const dayStyles = ['standard', 'outline', 'shadow', 'neumorphic', 'minimal'];
+    const newDayStyle = dayStyles[Math.floor(Math.random() * dayStyles.length)];
+    setDayStyle(newDayStyle);
+
+    // 5. Borders and Corners
+    setBorderRadius(Math.floor(Math.random() * 40));
+    setBorderWidth(Math.floor(Math.random() * 6));
+
+    // 6. Other Params
+    setHasShadow(Math.random() > 0.5);
+    
+    // 7. Background Style
+    const bgs = ['default', 'glass', 'mesh', 'paper', 'gradient'];
+    const newBg = bgs[Math.floor(Math.random() * bgs.length)];
+    setBgId(newBg);
+
+    // Reset custom colors to let scheme take over
+    setCustomPrimaryColor('');
+    setCustomAppBgColor('');
   };
 
   const themes: { id: ThemeType; name: string; class: string }[] = [
@@ -775,8 +839,8 @@ export default function App() {
         </section>
 
         <footer className="mt-auto pt-3 md:pt-5 flex justify-between items-end border-t border-current/40" id="footer-main">
-          <div className="text-[10px] font-black tracking-[3px] uppercase" id="brand">
-            Du Almanac
+          <div className="text-xs font-black tracking-[3px] uppercase" id="brand">
+            {footerText}
           </div>
           <div className="text-right flex flex-col items-end gap-0.5" id="footer-day-year">
             <div className="text-xs font-bold">{calendarData.weekday}</div>
@@ -970,13 +1034,13 @@ export default function App() {
             )}
           </motion.button>
 
-          {/* Random Quote Button */}
+          {/* Random Style Combination Button */}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ rotate: 180, scale: 0.95 }}
-            onClick={handleRandomQuote}
+            onClick={handleRandomStyle}
             className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
-            title="随机金句"
+            title="生成随机样式组合"
           >
             <RefreshCw size={20} />
           </motion.button>
@@ -1418,7 +1482,25 @@ export default function App() {
 
                   {/* Quote Font List */}
                   {activeTab === 'quote' && (
-                    <div className="flex flex-col gap-5 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex flex-col gap-3 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {/* Random Quote Button */}
+                      <button 
+                        onClick={handleRandomQuote}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${
+                          isDarkBg 
+                            ? 'bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20' 
+                            : 'bg-rose-50 border-rose-100 hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className={`w-3 h-3 ${isDarkBg ? 'text-rose-400' : 'text-rose-600'}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${isDarkBg ? 'text-rose-300' : 'text-rose-600'}`}>随机切换金句</span>
+                        </div>
+                        <div className="px-2 py-0.5 rounded-full bg-rose-500/10 text-[9px] font-bold text-rose-500">
+                          RANDOM
+                        </div>
+                      </button>
+
                       {/* Sync Switch */}
                       <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border ${isDarkBg ? 'bg-white/5 border-white/5' : 'bg-black/5 border-transparent'}`}>
                         <div className="flex items-center gap-2">
@@ -1437,37 +1519,37 @@ export default function App() {
                       </div>
 
                       {/* Font Section */}
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2 px-1">
                           <Type className="w-3.5 h-3.5 opacity-50" />
                           <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">金句字体</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                        <div className="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1">
                           {quoteFonts.map((f) => (
                             <button
                               key={f.id}
                               onClick={() => handleQuoteFontChange(f.id)}
-                              className={`flex flex-col items-start gap-1 py-2 px-3 rounded-2xl text-xs transition-all border ${
+                              className={`flex flex-col items-start gap-0.5 py-1.5 px-3 rounded-xl text-xs transition-all border ${
                                 quoteFont === f.id 
                                   ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' 
                                   : 'bg-black/5 border-transparent hover:bg-black/10'
                               }`}
                             >
-                              <span className="text-sm truncate w-full text-left" style={{ fontFamily: f.value }}>{f.name}</span>
+                              <span className="text-xs truncate w-full text-left" style={{ fontFamily: f.value }}>{f.name}</span>
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="space-y-4 px-1">
-                        <div className="flex flex-col gap-3">
+                      <div className="space-y-1.5 px-1">
+                        <div className="flex flex-col gap-1.5">
                           <div className="flex items-center gap-2 px-1">
                             <Baseline className="w-3.5 h-3.5 opacity-50" />
                             <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">字号调节</span>
                           </div>
                           
-                          <div className="bg-black/5 rounded-2xl p-3 space-y-4">
-                            <div className="space-y-2">
+                          <div className="bg-black/5 rounded-2xl p-2 space-y-2">
+                            <div className="space-y-1">
                               <div className="flex items-center justify-between px-1">
                                 <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">金句字号</span>
                                 <span className="text-[10px] font-bold text-rose-600">{quoteFontSize || 18}px</span>
@@ -1477,7 +1559,7 @@ export default function App() {
                                   <button
                                     key={size}
                                     onClick={() => handleQuoteFontSizeChange(size)}
-                                    className={`flex-1 h-8 rounded-xl text-[10px] font-bold transition-all ${
+                                    className={`flex-1 h-6 rounded-lg text-[10px] font-bold transition-all ${
                                       quoteFontSize === size || (!quoteFontSize && size === 18)
                                         ? 'bg-white text-rose-700 shadow-sm'
                                         : 'text-black/40 hover:text-black/80'
@@ -1489,7 +1571,7 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                               <div className="flex items-center justify-between px-1">
                                 <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">今日宜字号</span>
                                 <span className="text-[10px] font-bold text-rose-600">{adviceFontSize || 14}px</span>
@@ -1499,7 +1581,7 @@ export default function App() {
                                   <button
                                     key={size}
                                     onClick={() => handleAdviceFontSizeChange(size)}
-                                    className={`flex-1 h-8 rounded-xl text-[10px] font-bold transition-all ${
+                                    className={`flex-1 h-6 rounded-lg text-[10px] font-bold transition-all ${
                                       adviceFontSize === size || (!adviceFontSize && size === 14)
                                         ? 'bg-white text-rose-700 shadow-sm'
                                         : 'text-black/40 hover:text-black/80'
@@ -1518,24 +1600,52 @@ export default function App() {
 
                   {/* Settings Tab */}
                   {activeTab === 'setting' && (
-                    <div className="flex flex-col gap-4 p-3">
+                    <div className="flex flex-col gap-4 p-3 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-medium opacity-60 uppercase tracking-wider">系统设置</span>
+                        <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">系统设置</span>
                       </div>
                       
-                      <div className="text-[9px] opacity-40 italic mt-2 mb-2">
+                      <div className="space-y-3">
+                        <div className="space-y-1.5 px-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">底部文字</span>
+                            <span className="text-[9px] opacity-30 italic">限制20中/40英</span>
+                          </div>
+                          <div className={`relative rounded-xl border transition-all flex items-center overflow-hidden ${isDarkBg ? 'bg-white/5 border-white/10 focus-within:border-white/30' : 'bg-black/5 border-transparent focus-within:border-black/20'}`}>
+                            <input 
+                              type="text"
+                              value={footerText}
+                              onChange={(e) => handleFooterTextChange(e.target.value)}
+                              placeholder="输入底部显示的文字..."
+                              className="w-full bg-transparent px-3 py-2 text-xs font-medium focus:outline-none"
+                            />
+                            {footerText !== 'Your Day' && (
+                              <button 
+                                onClick={() => handleFooterTextChange('Your Day')}
+                                className="px-2 py-2 opacity-40 hover:opacity-100 transition-all"
+                                title="恢复默认"
+                              >
+                                <RotateCcw size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-[9px] opacity-40 italic mt-1 px-1">
                         更多自定义功能开发中...
                       </div>
+                      
                       <button
                         onClick={handleResetDefaults}
-                        className={`w-full mt-2 py-2 px-3 rounded-xl border transition-all flex items-center justify-center gap-2 text-[10px] font-bold ${
+                        className={`w-full mt-1 py-2 px-3 rounded-xl border transition-all flex items-center justify-center gap-2 text-[10px] font-bold ${
                           resetSuccess 
-                            ? 'bg-green-500 border-green-500 text-white' 
+                            ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20' 
                             : 'border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white'
                         }`}
                       >
                         <RotateCcw size={12} className={resetSuccess ? 'animate-spin' : ''} />
-                        {resetSuccess ? '已恢复默认' : '恢复默认设置'}
+                        {resetSuccess ? '已完成重置' : '恢复全站默认设置'}
                       </button>
                     </div>
                   )}
