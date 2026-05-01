@@ -232,9 +232,10 @@ body {
   opacity: 0.3;
 }
 .theme-crimson .date-number {
-  @apply border-[4px] rounded-full w-[1.4em] h-[1.4em] flex items-center justify-center mx-auto leading-none pt-[0.1em];
+  @apply border-[4px] rounded-full w-[1.25em] h-[1.25em] flex items-center justify-center mx-auto leading-none pt-[0.1em];
   border-color: var(--border-accent);
   font-weight: 900;
+  --date-font-size: clamp(100px, 40cqw, 220px);
 }
 .theme-crimson .date-section {
   @apply flex items-center justify-center flex-1 my-0;
