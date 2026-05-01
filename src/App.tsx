@@ -7,7 +7,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar, Lunar } from 'lunar-javascript';
 import { QUOTES, ADVICE_POOL } from './data/quotes';
-import { Palette, X, Download, RefreshCw, RotateCcw, Type, Baseline, Layers, Check } from 'lucide-react';
+import { Palette, X, Download, RefreshCw, RotateCcw, Type, Baseline, Layers, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 
 const getHash = (str: string) => {
@@ -65,6 +65,7 @@ export default function App() {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'theme' | 'font' | 'quote' | 'scheme' | 'background' | 'card' | 'border' | 'setting'>('theme');
   const [randomSeed, setRandomSeed] = useState(0);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -95,8 +96,6 @@ export default function App() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isSwitcherOpen]);
-  const now = new Date();
-
   // Load preferences from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('calendar-theme') as ThemeType;
@@ -262,6 +261,12 @@ export default function App() {
     localStorage.setItem('calendar-day-style', style);
   };
 
+  const handleAdjustDate = (days: number) => {
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(nextDate.getDate() + days);
+    setCurrentDate(nextDate);
+  };
+
   const handleBorderColorChange = (newColor: string, isCustom = false) => {
     setBorderColor(newColor);
     setIsCustomBorder(isCustom);
@@ -339,7 +344,7 @@ export default function App() {
   };
 
   const calendarData = useMemo(() => {
-    const solar = Solar.fromDate(now);
+    const solar = Solar.fromDate(currentDate);
     const lunar = Lunar.fromSolar(solar);
     
     const year = solar.getYear();
@@ -375,15 +380,16 @@ export default function App() {
         : (isModern ? `${monthNamesEn[month - 1]} ${monthNames[month - 1]}` : monthNames[month - 1]),
       day,
       weekday: isModern ? `${weekDays[weekIdx]} ${weekDaysEn[weekIdx].toUpperCase()}` : weekDays[weekIdx],
-      lunarDate: theme === 'classic' ? `农历${lunarMonth}月${lunarDay}·${festivals.length > 0 ? festivals[0] : solarTerm || ''}` : `农历${lunarMonth}月${lunarDay}`,
+      lunarDate: theme === 'classic' ? `农历${lunarMonth}月${lunarDay}${festivals.length > 0 ? '·' + festivals[0] : solarTerm ? '·' + solarTerm : ''}` : `农历${lunarMonth}月${lunarDay}`,
       lunarGanzhi: theme === 'classic' || theme === 'traditional' 
         ? `${lunarYearGanzhi}年·${lunarMonthGanzhi}月·${lunarDayGanzhi}日` 
         : `${lunarYearGanzhi}年${lunarMonthGanzhi}月${lunarDayGanzhi}日`,
-      festivals: festivals.length > 0 ? festivals[0] : solarTerm || '',
+      festivals: festivals.join(' '),
+      solarTerm: solarTerm || '',
       quote,
       advice
     };
-  }, [now, theme, randomSeed]);
+  }, [currentDate, theme, randomSeed]);
 
   const handleRandomQuote = () => {
     const newSeed = Math.floor(Math.random() * 1000000);
@@ -796,9 +802,103 @@ export default function App() {
         </header>
 
         <section className="flex-1 relative flex items-center justify-center date-section">
-          {calendarData.festivals && theme !== 'classic' && (
-            <div className="festival-badge" id="festival-badge">
-              {calendarData.festivals}
+          {/* Theme-specific Festival/Solar Term Layouts */}
+          {(calendarData.festivals || calendarData.solarTerm) && theme !== 'classic' && (
+            <div className="absolute inset-0 pointer-events-none select-none" id="festival-layer">
+              {/* 1. Traditional/Vintage: Red Stamp Style */}
+              {(theme === 'traditional' || theme === 'vintage') && (
+                <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">
+                  {calendarData.festivals && (
+                    <div className="transform rotate-6 flex items-center justify-center">
+                      <div className="border-2 border-red-600/60 text-red-600/70 p-0.5 rounded-sm flex items-center justify-center min-w-[32px] min-h-[32px]">
+                        <div className="border border-red-600/40 px-1 py-1 text-[10px] font-serif font-black leading-tight flex flex-col items-center">
+                          {calendarData.festivals.split(' ')[0].split('').map((char, index) => (
+                            <span key={index}>{char}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {calendarData.solarTerm && (
+                    <div className="transform -rotate-6 flex items-center justify-center self-end -mt-2">
+                      <div className="border border-red-600/40 text-red-600/50 p-0.5 rounded-sm flex items-center justify-center min-w-[28px] min-h-[28px]">
+                        <div className="px-0.5 py-0.5 text-[8px] font-serif font-bold leading-tight flex flex-col items-center">
+                          {calendarData.solarTerm.split('').map((char, index) => (
+                            <span key={index}>{char}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 2. Editorial/Crimson: Vertical Label */}
+              {(theme === 'editorial' || theme === 'crimson') && (
+                <div 
+                  className="absolute flex items-start gap-1 z-10"
+                  style={{ top: '-12px', right: '2px' }}
+                >
+                  {calendarData.festivals && (
+                    <div className="bg-[var(--color-primary)] text-[var(--color-bg)] py-1 px-1 flex flex-col items-center gap-0.5">
+                      <div className="w-[1px] h-1.5 bg-current opacity-30 mb-0.5" />
+                      <div className="text-[9px] font-bold [writing-mode:vertical-rl] tracking-[1px] py-1">
+                        {calendarData.festivals.split(' ')[0]}
+                      </div>
+                      <div className="w-[1px] h-1.5 bg-current opacity-30 mt-0.5" />
+                    </div>
+                  )}
+                  {calendarData.solarTerm && (
+                    <div className={`bg-[var(--color-primary)]/10 text-[var(--color-primary)] py-1 px-0.5 flex flex-col items-center gap-0.5 ${
+                      theme === 'crimson' ? 'border border-[var(--color-primary)]/20 rounded-full px-1' : 
+                      theme === 'editorial' ? 'border-b border-[var(--color-primary)]/20' : 
+                      'border border-[var(--color-primary)]/20'
+                    }`}>
+                      <div className="text-[10px] font-bold [writing-mode:vertical-rl] tracking-[1px] py-1">
+                        {calendarData.solarTerm}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 3. Poster: Top Left below Month/Year */}
+              {theme === 'poster' && (
+                <div className="absolute left-1 top-10 flex flex-col items-start gap-1 z-10">
+                  {calendarData.festivals && (
+                    <div className="bg-[var(--color-primary)] text-[var(--color-bg)] px-2 py-0.5 flex items-center gap-2">
+                      <div className="text-[9px] font-black uppercase tracking-[2px]">
+                        {calendarData.festivals.split(' ')[0]}
+                      </div>
+                    </div>
+                  )}
+                  {calendarData.solarTerm && (
+                    <div className="border border-[var(--color-primary)] text-[var(--color-primary)] px-2 py-0.5 flex items-center gap-2">
+                      <div className="text-[8px] font-bold uppercase tracking-[1px]">
+                        {calendarData.solarTerm}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 4. Technical: New Refined Badge - Standard position */}
+              {(theme === 'technical') && (
+                <div className="absolute top-0 right-1 flex flex-col items-end gap-1 z-10">
+                  {calendarData.festivals && (
+                    <div className="flex items-center gap-2 bg-[var(--color-primary)] text-[var(--color-bg)] px-3 py-1 text-[11px] font-black tracking-widest leading-none">
+                      {calendarData.festivals.split(' ')[0]}
+                      <span className="opacity-50 text-[8px]">●</span>
+                    </div>
+                  )}
+                  {calendarData.solarTerm && (
+                    <div className="flex items-center gap-2 border border-[var(--color-primary)] text-[var(--color-primary)] px-2 py-0.5 text-[9px] font-bold tracking-wider leading-none">
+                      {calendarData.solarTerm}
+                      <span className="opacity-30 text-[6px]">○</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           
@@ -819,6 +919,36 @@ export default function App() {
           >
             {calendarData.day}
           </h1>
+
+          {/* 5. Minimal & New Below-Date Styles: Festivals as subtext under the day */}
+          {(calendarData.festivals || calendarData.solarTerm) && (
+            <>
+              {(theme === 'zen' || theme === 'minimal' || theme === 'journal') && (
+                <div className="absolute bottom-6 right-0 left-0 text-center animate-in fade-in duration-700 flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-bold tracking-[6px] uppercase opacity-40 border-t border-current/20 pt-1">
+                    {[calendarData.festivals.split(' ')[0], calendarData.solarTerm].filter(Boolean).join(' · ')}
+                  </span>
+                </div>
+              )}
+
+              {(theme === 'bold' || theme === 'dark' || theme === 'warm') && (
+                <div className="absolute bottom-2 md:bottom-4 right-0 left-0 text-center animate-in slide-in-from-top-2 duration-500 flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-3">
+                    {calendarData.festivals && (
+                      <span className={`text-[10px] font-black tracking-[4px] uppercase ${theme === 'bold' ? 'bg-[var(--color-primary)] text-[var(--color-bg)] px-3 py-0.5' : 'opacity-60'}`}>
+                        {calendarData.festivals.split(' ')[0]}
+                      </span>
+                    )}
+                    {calendarData.solarTerm && (
+                      <span className="text-[9px] font-bold tracking-[2px] uppercase opacity-40 border-l border-current/30 pl-3">
+                        {calendarData.solarTerm}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="absolute right-0 top-1/2 -translate-y-1/2 sidebar sidebar-right" id="side-right">
             {calendarData.lunarGanzhi}
@@ -1012,6 +1142,26 @@ export default function App() {
           transition={{ type: 'spring', damping: 25, stiffness: 180 }}
           className="flex flex-col items-end gap-4 p-4 pr-3"
         >
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleAdjustDate(-1)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
+            title="前一天"
+          >
+            <ChevronLeft size={20} />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleAdjustDate(1)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
+            title="后一天"
+          >
+            <ChevronRight size={20} />
+          </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}

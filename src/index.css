@@ -348,8 +348,8 @@ body {
 }
 
 .theme-poster .date-number {
-  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0 md:-right-12 md:-bottom-16 opacity-[0.08] font-black italic tracking-tighter;
-  --date-font-size: clamp(260px, 90cqw, 500px);
+  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-50 font-black italic tracking-tighter;
+  --date-font-size: clamp(220px, 80cqw, 400px);
   pointer-events: none;
 }
 
@@ -415,13 +415,4 @@ body {
   @apply border-t border-current/40 bg-black/10 p-6;
 }
 
-.festival-badge {
-  @apply absolute -top-[10px] right-0 text-white text-[12px] px-2.5 py-0.5 font-bold;
-  background-color: var(--border-accent, #C00);
-}
 
-.theme-technical .festival-badge {
-  @apply opacity-100;
-  background-color: var(--border-accent);
-  color: var(--bg-page);
-}
