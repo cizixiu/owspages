@@ -42,6 +42,8 @@ export default function App() {
   const [customPrimaryColor, setCustomPrimaryColor] = useState<string>('');
   const [customAppBgColor, setCustomAppBgColor] = useState<string>('');
   const [customCardBgColor, setCustomCardBgColor] = useState<string>('');
+  const [customQuoteText, setCustomQuoteText] = useState<string>('');
+  const [customQuoteSource, setCustomQuoteSource] = useState<string>('');
   const [customBorderColor, setCustomBorderColor] = useState<string>('');
   const [isCustomBorder, setIsCustomBorder] = useState(false);
   const [isCustomCardBg, setIsCustomCardBg] = useState(false);
@@ -159,6 +161,12 @@ export default function App() {
     const savedCustomCardBg = localStorage.getItem('calendar-custom-card-bg');
     if (savedCustomCardBg) setCustomCardBgColor(savedCustomCardBg);
 
+    const savedCustomQuote = localStorage.getItem('calendar-custom-quote');
+    if (savedCustomQuote) setCustomQuoteText(savedCustomQuote);
+
+    const savedCustomSource = localStorage.getItem('calendar-custom-source');
+    if (savedCustomSource) setCustomQuoteSource(savedCustomSource);
+
     const savedFooterText = localStorage.getItem('calendar-footer-text');
     if (savedFooterText) setFooterText(savedFooterText);
   }, []);
@@ -217,6 +225,18 @@ export default function App() {
     }
     setFooterText(slicedText);
     localStorage.setItem('calendar-footer-text', slicedText);
+  };
+
+  const handleCustomQuoteChange = (text: string) => {
+    const val = text.slice(0, 300);
+    setCustomQuoteText(val);
+    localStorage.setItem('calendar-custom-quote', val);
+  };
+
+  const handleCustomSourceChange = (text: string) => {
+    const val = text.slice(0, 50);
+    setCustomQuoteSource(val);
+    localStorage.setItem('calendar-custom-source', val);
   };
 
   const handleCustomAppBgChange = (color: string) => {
@@ -306,6 +326,8 @@ export default function App() {
     setCardTexture('none');
     setScheme('original');
     setBgId('default');
+    setCustomQuoteText('');
+    setCustomQuoteSource('');
     setIsFontSync(false);
     setIsCustomBorder(false);
     setIsCustomCardBg(false);
@@ -334,7 +356,9 @@ export default function App() {
       'calendar-advice-font-size',
       'calendar-day-font-size',
       'calendar-day-style',
-      'calendar-footer-text'
+      'calendar-footer-text',
+      'calendar-custom-quote',
+      'calendar-custom-source'
     ];
     overrideKeys.forEach(key => localStorage.removeItem(key));
     
@@ -368,7 +392,12 @@ export default function App() {
     const dateStr = `${year}-${month}-${day}`;
     // Use the base hash if seed is 0, otherwise use randomSeed
     const hash = randomSeed === 0 ? getHash(dateStr) : randomSeed;
-    const quote = QUOTES[hash % QUOTES.length];
+    
+    // Custom Quote Logic
+    const quote = customQuoteText 
+      ? { text: customQuoteText, author: customQuoteSource, book: '' }
+      : QUOTES[hash % QUOTES.length];
+      
     const advice = ADVICE_POOL[hash % ADVICE_POOL.length];
 
     const isModern = ['bold', 'dark', 'technical', 'poster', 'editorial', 'crimson'].includes(theme);
@@ -389,7 +418,7 @@ export default function App() {
       quote,
       advice
     };
-  }, [currentDate, theme, randomSeed]);
+  }, [currentDate, theme, randomSeed, customQuoteText, customQuoteSource]);
 
   const handleRandomQuote = () => {
     const newSeed = Math.floor(Math.random() * 1000000);
@@ -1755,7 +1784,57 @@ export default function App() {
                         <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">系统设置</span>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="space-y-4">
+                        <div className="space-y-1.5 px-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">自定义金句</span>
+                            <span className="text-[9px] opacity-30 italic">{customQuoteText.length}/300</span>
+                          </div>
+                          <div className={`relative rounded-xl border transition-all flex flex-col overflow-hidden ${isDarkBg ? 'bg-white/5 border-white/10 focus-within:border-white/30' : 'bg-black/5 border-transparent focus-within:border-black/20'}`}>
+                            <textarea 
+                              value={customQuoteText}
+                              onChange={(e) => handleCustomQuoteChange(e.target.value)}
+                              placeholder="输入你想展示的金句内容..."
+                              rows={3}
+                              className="w-full bg-transparent px-3 py-2 text-[11px] leading-relaxed resize-none focus:outline-none"
+                            />
+                            {customQuoteText && (
+                              <button 
+                                onClick={() => handleCustomQuoteChange('')}
+                                className="absolute right-1 top-1 p-1.5 opacity-40 hover:opacity-100 transition-all"
+                                title="清除内容"
+                              >
+                                <RotateCcw size={10} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 px-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">金句署名/来源</span>
+                            <span className="text-[9px] opacity-30 italic">{customQuoteSource.length}/50</span>
+                          </div>
+                          <div className={`relative rounded-xl border transition-all flex items-center overflow-hidden ${isDarkBg ? 'bg-white/5 border-white/10 focus-within:border-white/30' : 'bg-black/5 border-transparent focus-within:border-black/20'}`}>
+                            <input 
+                              type="text"
+                              value={customQuoteSource}
+                              onChange={(e) => handleCustomSourceChange(e.target.value)}
+                              placeholder="署名或书名..."
+                              className="w-full bg-transparent px-3 py-2 text-xs font-medium focus:outline-none"
+                            />
+                            {customQuoteSource && (
+                              <button 
+                                onClick={() => handleCustomSourceChange('')}
+                                className="px-2 py-2 opacity-40 hover:opacity-100 transition-all"
+                                title="清除署名"
+                              >
+                                <RotateCcw size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
                         <div className="space-y-1.5 px-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">底部文字</span>
