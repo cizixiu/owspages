@@ -49,6 +49,8 @@ export default function App() {
   const [isCustomCardBg, setIsCustomCardBg] = useState(false);
   const [cardTexture, setCardTexture] = useState('none');
   const [footerText, setFooterText] = useState('Your Day');
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [isTearing, setIsTearing] = useState(false);
 
   const cardBgs = [
     { id: 'white', color: '#FFFFFF', label: '纯白' },
@@ -170,7 +172,60 @@ export default function App() {
 
     const savedFooterText = localStorage.getItem('calendar-footer-text');
     if (savedFooterText) setFooterText(savedFooterText);
+
+    const savedManualMode = localStorage.getItem('calendar-manual-mode') === 'true';
+    setIsManualMode(savedManualMode);
+    
+    // If manual mode, try to load last valid date
+    if (savedManualMode) {
+      const savedDate = localStorage.getItem('calendar-last-date');
+      if (savedDate) {
+        const d = new Date(savedDate);
+        if (!isNaN(d.getTime())) {
+          // If the saved date is older than today, keep it. 
+          // If it's today or future, just use today
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (d < today) {
+            setCurrentDate(d);
+          }
+        }
+      }
+    }
   }, []);
+
+  const handleManualModeToggle = (val: boolean) => {
+    setIsManualMode(val);
+    localStorage.setItem('calendar-manual-mode', String(val));
+    if (!val) {
+      setCurrentDate(new Date());
+    }
+  };
+
+  const handleTear = () => {
+    if (isTearing) return;
+    
+    setIsTearing(true);
+    
+    // Change date after a small delay to allow for interaction feedback
+    // but fast enough that the animation starts almost immediately
+    setTimeout(() => {
+      const nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const targetDate = nextDate > today ? today : nextDate;
+      setCurrentDate(targetDate);
+      localStorage.setItem('calendar-last-date', targetDate.toISOString());
+      
+      // Keep isTearing true for the duration of the animation
+      setTimeout(() => {
+        setIsTearing(false);
+      }, 2000); 
+    }, 100);
+  };
 
   const handleThemeChange = (newTheme: ThemeType) => {
     setTheme(newTheme);
@@ -322,6 +377,11 @@ export default function App() {
   const [resetSuccess, setResetSuccess] = useState(false);
 
   const handleResetDefaults = () => {
+    // Reset fundamental themes
+    setTheme('bold');
+    setDateFont('playfair');
+    setQuoteFont('serif');
+
     // Reset Overrides to Theme Defaults (undefined/empty)
     setBorderRadius(undefined);
     setBorderWidth(undefined);
@@ -339,6 +399,8 @@ export default function App() {
     setIsFontSync(false);
     setIsCustomBorder(false);
     setIsCustomCardBg(false);
+    setIsManualMode(false);
+    setHasShadow(true);
     setFooterText('Your Day');
     
     // Clear custom color inputs
@@ -349,6 +411,9 @@ export default function App() {
 
     // Clear LocalStorage overrides
     const overrideKeys = [
+      'calendar-theme',
+      'calendar-date-font',
+      'calendar-quote-font',
       'calendar-scheme',
       'calendar-bg-id', 
       'calendar-radius', 
@@ -366,7 +431,9 @@ export default function App() {
       'calendar-day-style',
       'calendar-footer-text',
       'calendar-custom-quote',
-      'calendar-custom-source'
+      'calendar-custom-source',
+      'calendar-manual-mode',
+      'calendar-last-date'
     ];
     overrideKeys.forEach(key => localStorage.removeItem(key));
     
@@ -832,10 +899,73 @@ export default function App() {
           borderWidth: borderWidth !== undefined ? `${borderWidth}px` : undefined,
           borderColor: borderColor || undefined,
           borderStyle: (borderWidth !== undefined && borderWidth > 0) ? 'solid' : undefined,
-          boxShadow: hasShadow ? undefined : 'none'
+          boxShadow: hasShadow ? undefined : 'none',
+          perspective: '1200px',
+          overflow: isTearing ? 'visible' : (dayStyle === 'shadow' ? 'visible' : 'hidden')
         } as React.CSSProperties}
       >
-        <header className="flex justify-between items-start mb-5" id="header">
+        {/* Layered pages background for depth - improved for realistic look */}
+        <div 
+          className="absolute inset-0 -z-10 translate-y-[2px] scale-[0.998] shadow-sm opacity-70 transition-colors border-b border-black/5" 
+          style={{ backgroundColor: cardBg || '#FFFFFF', borderRadius: 'inherit' }} 
+        />
+        <div 
+          className="absolute inset-0 -z-20 translate-y-[4px] scale-[0.996] shadow-sm opacity-50 transition-colors border-b border-black/5" 
+          style={{ backgroundColor: cardBg || '#FFFFFF', borderRadius: 'inherit' }} 
+        />
+        <div 
+          className="absolute inset-0 -z-30 translate-y-[6px] scale-[0.994] shadow-sm opacity-30 transition-colors border-b border-black/5" 
+          style={{ backgroundColor: cardBg || '#FFFFFF', borderRadius: 'inherit' }} 
+        />
+        
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={currentDate.toISOString()}
+            initial={isTearing ? { opacity: 0, y: -20, rotateX: -15, scale: 1.02 } : false}
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              rotateX: 0, 
+              scale: 1,
+              transition: { type: 'spring', damping: 20, stiffness: 100 }
+            }}
+            exit={{ 
+              opacity: [1, 1, 0],
+              y: [0, 50, 1500], 
+              rotateX: [0, 45, 90],
+              rotateY: [0, -10, -20],
+              rotateZ: [0, -5, -15],
+              skewX: [0, -5, -20],
+              filter: ['blur(0px)', 'blur(2px)', 'blur(8px)'],
+              scale: [1, 1.05, 0.8],
+              transformOrigin: 'top center',
+              transition: { 
+                duration: 2.2, 
+                times: [0, 0.8, 1],
+                ease: [0.45, 0.05, 0.55, 0.95] // Custom slow-to-fast curve
+              }
+            }}
+            drag={isManualMode && (() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const cur = new Date(currentDate);
+              cur.setHours(0, 0, 0, 0);
+              return cur < today;
+            })() ? "y" : false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.15}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 120) {
+                handleTear();
+              }
+            }}
+            style={{ 
+              backgroundColor: cardBg || '#FFFFFF',
+              borderRadius: 'inherit'
+            }}
+            className="flex flex-col flex-1 h-full w-full relative z-10"
+          >
+            <header className="flex justify-between items-start mb-5" id="header">
           <div className="month-box" id="header-month">
             {calendarData.monthName}
           </div>
@@ -843,10 +973,11 @@ export default function App() {
             <div className="flex flex-col items-end">
               <span className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mb-1">今日宜</span>
               <div 
-                className="text-xs font-bold opacity-60 leading-tight max-w-[140px] flex flex-wrap justify-end gap-x-2 gap-y-0.5" 
+                className="text-xs font-bold opacity-60 leading-tight max-w-[140px] flex flex-wrap justify-end gap-x-2 gap-y-0.5 overflow-hidden" 
                 style={{ 
                   fontFamily: currentQuoteFontValue, 
-                  fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined 
+                  fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined,
+                  maxHeight: adviceFontSize ? `${adviceFontSize * 1.35 * 2}px` : '2.7em'
                 }}
               >
                 {calendarData.dayYi.map((item: string, i: number) => (
@@ -857,10 +988,11 @@ export default function App() {
             <div className="flex flex-col items-end">
               <span className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mb-1">今日忌</span>
               <div 
-                className="text-xs font-bold opacity-60 leading-tight max-w-[140px] flex flex-wrap justify-end gap-x-2 gap-y-0.5" 
+                className="text-xs font-bold opacity-60 leading-tight max-w-[140px] flex flex-wrap justify-end gap-x-2 gap-y-0.5 overflow-hidden" 
                 style={{ 
                   fontFamily: currentQuoteFontValue, 
-                  fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined 
+                  fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined,
+                  maxHeight: adviceFontSize ? `${adviceFontSize * 1.35 * 2}px` : '2.7em'
                 }}
               >
                 {calendarData.dayJi.map((item: string, i: number) => (
@@ -1043,18 +1175,20 @@ export default function App() {
             {footerText}
           </div>
           <div className="text-right flex flex-col items-end gap-0.5" id="footer-day-year">
-            <div className="text-xs font-bold">{calendarData.weekday}</div>
             <div className="text-[11px] text-[var(--color-muted)]">{calendarData.year}年</div>
+            <div className="text-xs font-bold">{calendarData.weekday}</div>
           </div>
         </footer>
+        </motion.div>
+      </AnimatePresence>
 
-        <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
+        <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.03] z-[30] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
         {cardTexture === 'grain' && (
-          <div className="absolute inset-0 pointer-events-none opacity-[0.12] mix-blend-multiply" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+          <div className="absolute inset-0 pointer-events-none opacity-[0.12] mix-blend-multiply z-[30]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
         )}
         {cardTexture === 'linen' && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
-            <div className="absolute -inset-[50px] opacity-[0.04]" style={{ 
+          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl z-[30]">
+            <div className="absolute -inset-[50px] opacity-[0.06]" style={{ 
               background: `
                 repeating-radial-gradient(#000 0 0.0001%,#fff 0 0.0002%) 60% 60%/3000px 3000px,
                 repeating-conic-gradient(#000 0 0.0001%,#fff 0 0.0002%) 40% 40%/4000px 3000px
@@ -1066,7 +1200,7 @@ export default function App() {
         )}
         {cardTexture === 'recycled' && (
           <>
-            <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-100" style={{ 
+            <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-100 z-[30]" style={{ 
               backgroundImage: `
                 radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
                 radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
@@ -1216,9 +1350,9 @@ export default function App() {
           initial="hidden"
           animate={(isSidebarHovered || isSwitcherOpen || isDatePickerOpen) ? 'visible' : 'hidden'}
           transition={{ type: 'spring', damping: 25, stiffness: 180 }}
-          className="flex flex-col items-end gap-4 p-4 pr-3"
+          className="flex flex-col items-end gap-4 p-4 pr-0"
         >
-          <motion.button
+            <motion.button
             ref={dateTriggerRef}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -1254,7 +1388,6 @@ export default function App() {
             )}
           </motion.button>
 
-          {/* Random Style Combination Button */}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ rotate: 180, scale: 0.95 }}
@@ -1272,6 +1405,37 @@ export default function App() {
             >
               {isSwitcherOpen ? <X size={20} /> : <Palette size={20} />}
             </button>
+          </div>
+
+          {isManualMode && (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const cur = new Date(currentDate);
+            cur.setHours(0, 0, 0, 0);
+            return cur < today;
+          })() && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleTear}
+              disabled={isTearing}
+              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center shadow-xl border border-rose-600/30 bg-rose-600 text-white relative group overflow-hidden`}
+              title="撕掉当前页"
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <motion.div
+                animate={isTearing ? { rotate: 360 } : {}}
+                transition={{ duration: 1, repeat: isTearing ? Infinity : 0, ease: "linear" }}
+              >
+                <RotateCcw size={18} />
+              </motion.div>
+              <span className="text-[9px] font-black mt-0.5 uppercase tracking-tighter">撕掉</span>
+              
+              {/* Notification pulse */}
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full" />
+            </motion.button>
+          )}
 
           {/* Date Picker Modal */}
           <AnimatePresence>
@@ -1280,7 +1444,7 @@ export default function App() {
                 initial={{ opacity: 0, x: 20, scale: 0.9 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                className={`date-picker-modal fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-4 rounded-[2.5rem] border shadow-2xl flex flex-col gap-4 w-[290px] transition-colors duration-500 ${menuClass} z-[60]`}
+                className={`date-picker-modal fixed right-[60px] top-1/2 -translate-y-1/2 backdrop-blur-md p-4 rounded-[2.5rem] border shadow-2xl flex flex-col gap-4 w-[290px] transition-colors duration-500 ${menuClass} z-[60]`}
               >
                 {/* Header: Month & Year selection */}
                 <div className="flex items-center justify-between px-1">
@@ -1443,7 +1607,7 @@ export default function App() {
                   initial={{ opacity: 0, x: 20, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                  className={`fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-4 rounded-[2.5rem] border shadow-2xl flex flex-col gap-4 w-[290px] transition-colors duration-500 ${menuClass}`}
+                  className={`fixed right-[60px] top-1/2 -translate-y-1/2 backdrop-blur-md p-4 rounded-[2.5rem] border shadow-2xl flex flex-col gap-4 w-[290px] transition-colors duration-500 ${menuClass}`}
                 >
                   {/* Tabs */}
                   <div className={`grid grid-cols-4 rounded-[1.5rem] p-1.5 gap-1 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
@@ -1983,113 +2147,79 @@ export default function App() {
 
                   {/* Settings Tab */}
                   {activeTab === 'setting' && (
-                    <div className="flex flex-col gap-4 p-3 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex flex-col gap-6 p-3 pr-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold opacity-60 uppercase tracking-widest">系统设置</span>
                       </div>
                       
-                      <div className="space-y-4">
-                        <div className="space-y-1.5 px-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">自定义金句</span>
-                            <span className="text-[9px] opacity-30 italic">{customQuoteText.length}/300</span>
+                      <div className="space-y-4 pr-3">
+                        {/* Manual Mode Toggle */}
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-black/5 hover:bg-black/10 transition-colors">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[13px] font-bold">手撕日历模式</span>
+                            <span className="text-[10px] opacity-40 leading-tight">开启后每天需手动撕掉旧日期<br/>才有今天的新日期</span>
                           </div>
-                          <div className={`relative rounded-xl border transition-all flex flex-col overflow-hidden ${isDarkBg ? 'bg-white/5 border-white/10 focus-within:border-white/30' : 'bg-black/5 border-transparent focus-within:border-black/20'}`}>
-                            <textarea 
-                              value={customQuoteText}
-                              onChange={(e) => handleCustomQuoteChange(e.target.value)}
-                              placeholder="输入你想展示的金句内容..."
-                              rows={3}
-                              className="w-full bg-transparent px-3 py-2 text-[11px] leading-relaxed resize-none focus:outline-none"
+                          <button 
+                            onClick={() => handleManualModeToggle(!isManualMode)}
+                            className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 relative ${isManualMode ? 'bg-rose-600' : 'bg-gray-300'}`}
+                          >
+                            <motion.div 
+                              animate={{ x: isManualMode ? 20 : 0 }}
+                              className="w-4 h-4 bg-white rounded-full shadow-md"
                             />
-                            {customQuoteText && (
-                              <button 
-                                onClick={() => handleCustomQuoteChange('')}
-                                className="absolute right-1 top-1 p-1.5 opacity-40 hover:opacity-100 transition-all"
-                                title="清除内容"
-                              >
-                                <RotateCcw size={10} />
-                              </button>
-                            )}
-                          </div>
+                          </button>
                         </div>
 
-                        <div className="space-y-1.5 px-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">金句署名/来源</span>
-                            <span className="text-[9px] opacity-30 italic">{customQuoteSource.length}/50</span>
-                          </div>
-                          <div className={`relative rounded-xl border transition-all flex items-center overflow-hidden ${isDarkBg ? 'bg-white/5 border-white/10 focus-within:border-white/30' : 'bg-black/5 border-transparent focus-within:border-black/20'}`}>
-                            <input 
-                              type="text"
-                              value={customQuoteSource}
-                              onChange={(e) => handleCustomSourceChange(e.target.value)}
-                              placeholder="署名或书名..."
-                              className="w-full bg-transparent px-3 py-2 text-xs font-medium focus:outline-none"
-                            />
-                            {customQuoteSource && (
-                              <button 
-                                onClick={() => handleCustomSourceChange('')}
-                                className="px-2 py-2 opacity-40 hover:opacity-100 transition-all"
-                                title="清除署名"
-                              >
-                                <RotateCcw size={12} />
-                              </button>
-                            )}
-                          </div>
+                        {/* Footer Text */}
+                        <div className="space-y-2">
+                          <div className="px-1 text-[10px] font-bold opacity-40 uppercase tracking-widest">页脚文字内容</div>
+                          <input 
+                            type="text"
+                            value={footerText}
+                            onChange={(e) => handleFooterTextChange(e.target.value)}
+                            className={`w-full px-4 py-3 rounded-2xl border bg-black/5 focus:outline-none focus:ring-2 focus:ring-rose-600/30 transition-all text-sm font-bold ${isDarkBg ? 'border-white/10' : 'border-gray-100'}`}
+                            placeholder="自定义页脚内容..."
+                          />
                         </div>
 
-                        <div className="space-y-1.5 px-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">底部文字</span>
-                            <span className="text-[9px] opacity-30 italic">限制20中/40英</span>
-                          </div>
-                          <div className={`relative rounded-xl border transition-all flex items-center overflow-hidden ${isDarkBg ? 'bg-white/5 border-white/10 focus-within:border-white/30' : 'bg-black/5 border-transparent focus-within:border-black/20'}`}>
-                            <input 
-                              type="text"
-                              value={footerText}
-                              onChange={(e) => handleFooterTextChange(e.target.value)}
-                              placeholder="输入底部显示的文字..."
-                              className="w-full bg-transparent px-3 py-2 text-xs font-medium focus:outline-none"
-                            />
-                            {footerText !== 'Your Day' && (
-                              <button 
-                                onClick={() => handleFooterTextChange('Your Day')}
-                                className="px-2 py-2 opacity-40 hover:opacity-100 transition-all"
-                                title="恢复默认"
-                              >
-                                <RotateCcw size={12} />
-                              </button>
+                        {/* Reset Button */}
+                        <div className="pt-4 border-t border-black/5">
+                          <button 
+                            onClick={handleResetDefaults}
+                            className={`w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all group relative overflow-hidden ${
+                              resetSuccess 
+                                ? 'bg-green-500 text-white shadow-lg' 
+                                : 'bg-black/5 hover:bg-rose-600 hover:text-white border border-transparent'
+                            }`}
+                          >
+                            {resetSuccess ? (
+                              <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="flex items-center gap-2">
+                                <Check size={16} />
+                                <span className="font-bold text-sm">已重置所有设置</span>
+                              </motion.div>
+                            ) : (
+                              <>
+                                <RotateCcw size={16} className="group-hover:rotate-[-180deg] transition-transform duration-500" />
+                                <span className="font-bold text-sm">恢复默认设置</span>
+                              </>
                             )}
-                          </div>
+                          </button>
+                          <p className="text-[10px] opacity-30 text-center mt-2 px-4 leading-tight italic">
+                            * 此操作将清除所有自定义配置，包括配色、字体及排版尺寸。
+                          </p>
                         </div>
                       </div>
-
-                      <div className="text-[9px] opacity-40 italic mt-1 px-1">
-                        更多自定义功能开发中...
-                      </div>
-                      
-                      <button
-                        onClick={handleResetDefaults}
-                        className={`w-full mt-1 py-2 px-3 rounded-xl border transition-all flex items-center justify-center gap-2 text-[10px] font-bold ${
-                          resetSuccess 
-                            ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20' 
-                            : 'border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white'
-                        }`}
-                      >
-                        <RotateCcw size={12} className={resetSuccess ? 'animate-spin' : ''} />
-                        {resetSuccess ? '已完成重置' : '恢复全站默认设置'}
-                      </button>
                     </div>
                   )}
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Trigger Handle - Subtle Vertical Line ALWAYS at the edge */}
-        <div className={`w-1 h-32 rounded-l-full cursor-pointer transition-all duration-300 relative z-50 ${isDarkBg ? 'bg-white/20 hover:bg-white/40' : 'bg-black/10 hover:bg-black/30'}`} />
+        {/* Trigger Handle - Improved hit area */}
+        <div className={`w-1.5 h-40 flex items-center justify-end cursor-pointer z-50 group/trigger`}>
+          <div className={`w-1.5 h-20 rounded-l-full transition-all duration-300 ${isDarkBg ? 'bg-white/20 group-hover/trigger:bg-white/50 group-hover/trigger:h-28' : 'bg-black/10 group-hover/trigger:bg-black/30 group-hover/trigger:h-28'}`} />
+        </div>
       </motion.div>
     </div>
   );
