@@ -411,6 +411,9 @@ export default function App() {
       
     const advice = ADVICE_POOL[hash % ADVICE_POOL.length];
 
+    const dayYi = lunar.getDayYi();
+    const dayJi = lunar.getDayJi();
+
     const isModern = ['bold', 'dark', 'technical', 'poster', 'editorial', 'crimson'].includes(theme);
 
     return {
@@ -427,7 +430,8 @@ export default function App() {
       festivals: festivals.join(' '),
       solarTerm: solarTerm || '',
       quote,
-      advice
+      dayYi,
+      dayJi
     };
   }, [currentDate, theme, randomSeed, customQuoteText, customQuoteSource]);
 
@@ -835,9 +839,35 @@ export default function App() {
           <div className="month-box" id="header-month">
             {calendarData.monthName}
           </div>
-          <div className="text-right" id="header-advice">
-            <div className="text-[10px] text-[var(--color-muted)] uppercase tracking-[1px] mb-1">今日宜</div>
-            <div className="text-sm font-semibold" style={{ fontFamily: currentQuoteFontValue, fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined }}>{calendarData.advice}</div>
+          <div className="text-right flex flex-col items-end gap-3" id="header-advice">
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mb-1">今日宜</span>
+              <div 
+                className="text-xs font-bold opacity-60 leading-tight max-w-[140px] flex flex-wrap justify-end gap-x-2 gap-y-0.5" 
+                style={{ 
+                  fontFamily: currentQuoteFontValue, 
+                  fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined 
+                }}
+              >
+                {calendarData.dayYi.map((item: string, i: number) => (
+                  <span key={i} className="whitespace-nowrap">{item}</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mb-1">今日忌</span>
+              <div 
+                className="text-xs font-bold opacity-60 leading-tight max-w-[140px] flex flex-wrap justify-end gap-x-2 gap-y-0.5" 
+                style={{ 
+                  fontFamily: currentQuoteFontValue, 
+                  fontSize: adviceFontSize ? `${adviceFontSize}px` : undefined 
+                }}
+              >
+                {calendarData.dayJi.map((item: string, i: number) => (
+                  <span key={i} className="whitespace-nowrap">{item}</span>
+                ))}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -1926,7 +1956,7 @@ export default function App() {
 
                             <div className="space-y-1">
                               <div className="flex items-center justify-between px-1">
-                                <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">今日宜字号</span>
+                                <span className="text-[10px] font-bold opacity-40 uppercase tracking-wider">宜忌字号</span>
                                 <span className="text-[10px] font-bold text-rose-600">{adviceFontSize || 14}px</span>
                               </div>
                               <div className="flex gap-1.5">
