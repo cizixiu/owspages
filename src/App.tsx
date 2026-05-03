@@ -7,7 +7,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar, Lunar } from 'lunar-javascript';
 import { QUOTES, ADVICE_POOL } from './data/quotes';
-import { Palette, X, Download, RefreshCw, RotateCcw, Type, Baseline, Layers, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Palette, X, Download, RefreshCw, RotateCcw, Type, Baseline, Layers, Check, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 
 const getHash = (str: string) => {
@@ -65,39 +65,40 @@ export default function App() {
   ];
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'theme' | 'font' | 'quote' | 'scheme' | 'background' | 'card' | 'border' | 'setting'>('theme');
   const [randomSeed, setRandomSeed] = useState(0);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const dateTriggerRef = useRef<HTMLButtonElement>(null);
   const actionButtonsRef = useRef<HTMLDivElement>(null);
 
-  // Click away to close settings panel
+  // Click away to close settings panel or date picker
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!isSwitcherOpen) return;
-
       const target = event.target as Node;
       
-      // Check if click is inside the panel
-      if (panelRef.current?.contains(target)) return;
+      // If we clicked inside the settings panel or its trigger, do nothing
+      if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+
+      // If we clicked inside the date picker or its trigger, do nothing
+      if ((target as HTMLElement).closest('.date-picker-modal') || dateTriggerRef.current?.contains(target)) return;
       
-      // Check if click is inside the trigger button
-      if (triggerRef.current?.contains(target)) return;
-      
-      // Check if click is inside the action buttons (download, random)
+      // If we clicked inside action buttons, do nothing
       if (actionButtonsRef.current?.contains(target)) return;
 
-      // If outside all of the above, close the panel
-      setIsSwitcherOpen(false);
+      // Otherwise, close both
+      if (isSwitcherOpen) setIsSwitcherOpen(false);
+      if (isDatePickerOpen) setIsDatePickerOpen(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isSwitcherOpen]);
+  }, [isSwitcherOpen, isDatePickerOpen]);
   // Load preferences from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('calendar-theme') as ThemeType;
@@ -281,10 +282,17 @@ export default function App() {
     localStorage.setItem('calendar-day-style', style);
   };
 
-  const handleAdjustDate = (days: number) => {
-    const nextDate = new Date(currentDate);
-    nextDate.setDate(nextDate.getDate() + days);
-    setCurrentDate(nextDate);
+  const handleSelectDate = (dateStr: string) => {
+    if (!dateStr) return;
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return;
+      const newDate = new Date(year, month - 1, day);
+      if (isNaN(newDate.getTime())) return;
+      setCurrentDate(newDate);
+    } catch (e) {
+      console.error('Invalid date selection:', e);
+    }
   };
 
   const handleBorderColorChange = (newColor: string, isCustom = false) => {
@@ -368,7 +376,10 @@ export default function App() {
   };
 
   const calendarData = useMemo(() => {
-    const solar = Solar.fromDate(currentDate);
+    // Defensive check for valid date
+    const safeDate = (currentDate && !isNaN(currentDate.getTime())) ? currentDate : new Date();
+    
+    const solar = Solar.fromDate(safeDate);
     const lunar = Lunar.fromSolar(solar);
     
     const year = solar.getYear();
@@ -1158,7 +1169,13 @@ export default function App() {
       <motion.div 
         className="fixed right-0 top-1/2 -translate-y-1/2 flex items-center z-50 group"
         onMouseEnter={() => setIsSidebarHovered(true)}
-        onMouseLeave={() => setIsSidebarHovered(false)}
+        onMouseLeave={() => {
+          setIsSidebarHovered(false);
+          // If the settings panel is not open, we can close the date picker when mouse leaves the sidebar area
+          if (!isSwitcherOpen && isDatePickerOpen) {
+            setIsDatePickerOpen(false);
+          }
+        }}
       >
         <motion.div 
           ref={actionButtonsRef}
@@ -1167,28 +1184,22 @@ export default function App() {
             visible: { x: 0, opacity: 1 }
           }}
           initial="hidden"
-          animate={(isSidebarHovered || isSwitcherOpen) ? 'visible' : 'hidden'}
+          animate={(isSidebarHovered || isSwitcherOpen || isDatePickerOpen) ? 'visible' : 'hidden'}
           transition={{ type: 'spring', damping: 25, stiffness: 180 }}
           className="flex flex-col items-end gap-4 p-4 pr-3"
         >
           <motion.button
+            ref={dateTriggerRef}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => handleAdjustDate(-1)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
-            title="前一天"
+            onClick={() => {
+              setIsDatePickerOpen(!isDatePickerOpen);
+              if (isSwitcherOpen) setIsSwitcherOpen(false);
+            }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${isDatePickerOpen ? tabActiveClass : btnBaseClass}`}
+            title="选择日期"
           >
-            <ChevronLeft size={20} />
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleAdjustDate(1)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border transition-all ${btnBaseClass}`}
-            title="后一天"
-          >
-            <ChevronRight size={20} />
+            <Calendar size={18} />
           </motion.button>
 
           <motion.button
@@ -1232,17 +1243,180 @@ export default function App() {
               {isSwitcherOpen ? <X size={20} /> : <Palette size={20} />}
             </button>
 
-            <AnimatePresence>
-              {isSwitcherOpen && (
+          {/* Date Picker Modal */}
+          <AnimatePresence>
+            {isDatePickerOpen && (
+              <motion.div
+                initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                className={`date-picker-modal fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-4 rounded-[2.5rem] border shadow-2xl flex flex-col gap-4 w-[290px] transition-colors duration-500 ${menuClass} z-[60]`}
+              >
+                {/* Header: Month & Year selection */}
+                <div className="flex items-center justify-between px-1">
+                  <button 
+                    onClick={() => {
+                      const prev = new Date(currentDate);
+                      prev.setMonth(prev.getMonth() - 1);
+                      setCurrentDate(prev);
+                    }}
+                    className={`p-2 rounded-xl transition-all ${isDarkBg ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em] mb-0.5">
+                      {currentDate.getFullYear()}年
+                    </span>
+                    <span className="text-base font-bold">
+                      {currentDate.getMonth() + 1}月
+                    </span>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      const next = new Date(currentDate);
+                      next.setMonth(next.getMonth() + 1);
+                      setCurrentDate(next);
+                    }}
+                    className={`p-2 rounded-xl transition-all ${isDarkBg ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                {/* Day Grid Header */}
+                <div className="grid grid-cols-7 gap-1 px-1">
+                  {['日', '一', '二', '三', '四', '五', '六'].map(d => (
+                    <div key={d} className="text-[10px] font-bold opacity-30 text-center py-1">
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day Grid Content */}
+                <div className="grid grid-cols-7 gap-1 px-1">
+                  {(() => {
+                    const year = currentDate.getFullYear();
+                    const month = currentDate.getMonth();
+                    const firstDay = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    
+                    const days = [];
+                    // Padding for first day
+                    for (let i = 0; i < firstDay; i++) {
+                      days.push(<div key={`pad-${i}`} className="h-8" />);
+                    }
+                    
+                    // Fill days
+                    for (let d = 1; d <= daysInMonth; d++) {
+                      const isSelected = currentDate.getDate() === d;
+                      days.push(
+                        <motion.button
+                          key={d}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => {
+                            const newDate = new Date(currentDate);
+                            newDate.setDate(d);
+                            setCurrentDate(newDate);
+                            setIsDatePickerOpen(false);
+                          }}
+                          className={`h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                            isSelected 
+                              ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' 
+                              : isDarkBg ? 'hover:bg-white/10' : 'hover:bg-black/5'
+                          }`}
+                        >
+                          {d}
+                        </motion.button>
+                      );
+                    }
+                    return days;
+                  })()}
+                </div>
+
+                {/* Year Selection (Fast jump) */}
+                <div className="mt-2 pt-4 border-t border-black/5 px-1">
+                  <div className="flex items-center gap-2 mb-3">
+                    <button 
+                      onClick={() => {
+                        const next = new Date(currentDate);
+                        next.setFullYear(next.getFullYear() - 1);
+                        setCurrentDate(next);
+                      }}
+                      className={`p-1.5 rounded-lg transition-all ${isDarkBg ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}
+                      title="上一年"
+                    >
+                      <ChevronLeft size={12} />
+                    </button>
+
+                    <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar justify-center">
+                      {(() => {
+                        const selectedYear = currentDate.getFullYear();
+                        const years = [];
+                        // Show 3 years before and 3 years after the currently selected year
+                        for (let y = selectedYear - 3; y <= selectedYear + 3; y++) {
+                          years.push(
+                            <button
+                              key={y}
+                              onClick={() => {
+                                const newDate = new Date(currentDate);
+                                newDate.setFullYear(y);
+                                setCurrentDate(newDate);
+                              }}
+                              className={`px-3 py-1 rounded-lg text-[9px] font-bold whitespace-nowrap transition-all ${
+                                selectedYear === y 
+                                  ? 'bg-black text-white px-4' 
+                                  : isDarkBg ? 'bg-white/10 opacity-60 hover:opacity-100' : 'bg-black/5 opacity-40 hover:opacity-100'
+                              }`}
+                            >
+                              {y}
+                            </button>
+                          );
+                        }
+                        return years;
+                      })()}
+                    </div>
+
+                    <button 
+                      onClick={() => {
+                        const next = new Date(currentDate);
+                        next.setFullYear(next.getFullYear() + 1);
+                        setCurrentDate(next);
+                      }}
+                      className={`p-1.5 rounded-lg transition-all ${isDarkBg ? 'hover:bg-white/10' : 'hover:bg-black/5'}`}
+                      title="下一年"
+                    >
+                      <ChevronRight size={12} />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setCurrentDate(new Date());
+                      setIsDatePickerOpen(false);
+                    }}
+                    className="w-full py-2 rounded-xl text-[10px] font-bold opacity-60 hover:opacity-100 transition-all border border-dashed border-black/20"
+                  >
+                    返回今天
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isSwitcherOpen && (
                 <motion.div 
                   ref={panelRef}
                   initial={{ opacity: 0, x: 20, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                  className={`fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-2 rounded-3xl border shadow-xl flex flex-col gap-2 min-w-[220px] transition-colors duration-500 ${menuClass}`}
+                  className={`fixed right-20 top-1/2 -translate-y-1/2 backdrop-blur-md p-4 rounded-[2.5rem] border shadow-2xl flex flex-col gap-4 w-[290px] transition-colors duration-500 ${menuClass}`}
                 >
                   {/* Tabs */}
-                  <div className={`grid grid-cols-4 rounded-2xl p-1 mb-1 gap-0.5 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
+                  <div className={`grid grid-cols-4 rounded-[1.5rem] p-1.5 gap-1 ${isDarkBg ? 'bg-white/10' : 'bg-gray-100'}`}>
                     <button 
                       onClick={() => setActiveTab('theme')}
                       className={`text-[11px] py-1.5 rounded-xl transition-all ${activeTab === 'theme' ? tabActiveClass : 'opacity-40'}`}
@@ -1317,7 +1491,7 @@ export default function App() {
                   {/* Scheme List */}
                   {activeTab === 'scheme' && (
                     <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
-                      <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                      <div className="grid grid-cols-6 gap-3 gap-y-5 px-1 pt-3">
                         {colorSchemes.map((s) => (
                           <button
                             key={s.id}
@@ -1355,7 +1529,7 @@ export default function App() {
                   {/* Background List */}
                   {activeTab === 'background' && (
                     <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1 pb-4">
-                      <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                      <div className="grid grid-cols-6 gap-3 gap-y-5 px-1 pt-3">
                         {backgrounds.map((b) => (
                           <button
                             key={b.id}
@@ -1448,7 +1622,7 @@ export default function App() {
 
                        <div className="px-1 mt-2">
                          <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider mb-2">背景色</div>
-                         <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                         <div className="grid grid-cols-6 gap-3 gap-y-5 px-1 pt-3">
                            {cardBgs.map((bg) => (
                              <button
                                key={bg.id}
@@ -1504,7 +1678,7 @@ export default function App() {
                    {/* Border Tab */}
                    {activeTab === 'border' && (
                      <div className="flex flex-col gap-4 max-h-[350px] overflow-y-auto pr-1 pb-4">
-                        <div className="grid grid-cols-4 gap-3 gap-y-5 px-1 pt-3">
+                        <div className="grid grid-cols-6 gap-3 gap-y-5 px-1 pt-3">
                           {['#E5E7EB', '#D1D5DB', '#9CA3AF', '#4B5563', '#1F2937', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'].map(c => (
                             <button
                               key={c}
