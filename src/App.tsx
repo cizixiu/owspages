@@ -554,6 +554,7 @@ export default function App() {
     { id: 'warm', name: '和风', class: 'bg-[#EDE0D4] border-[#D7CCC8]' },
     { id: 'poster', name: '海报', class: 'bg-white border-red-600' },
     { id: 'traditional', name: '传统', class: 'bg-[#F4EBE2] border-[#B03A2E]' },
+    { id: 'technical', name: '蓝图', class: 'bg-[#0A192F] border-[#64FFDA]' },
     { id: 'editorial', name: '社论', class: 'bg-white border-black' },
     { id: 'vintage', name: '复古', class: 'bg-[#E9C46A] border-[#264653]' },
     { id: 'zen', name: '禅意', class: 'bg-[#F1F8E9] border-[#558B2F]' },
@@ -907,15 +908,15 @@ export default function App() {
         {/* Layered pages background for depth - improved for realistic look */}
         <div 
           className="absolute inset-0 -z-10 translate-y-[2px] scale-[0.998] shadow-sm opacity-70 transition-colors border-b border-black/5" 
-          style={{ backgroundColor: cardBg || '#FFFFFF', borderRadius: 'inherit' }} 
+          style={{ backgroundColor: cardBg || 'var(--bg-card)', borderRadius: 'inherit' }} 
         />
         <div 
           className="absolute inset-0 -z-20 translate-y-[4px] scale-[0.996] shadow-sm opacity-50 transition-colors border-b border-black/5" 
-          style={{ backgroundColor: cardBg || '#FFFFFF', borderRadius: 'inherit' }} 
+          style={{ backgroundColor: cardBg || 'var(--bg-card)', borderRadius: 'inherit' }} 
         />
         <div 
           className="absolute inset-0 -z-30 translate-y-[6px] scale-[0.994] shadow-sm opacity-30 transition-colors border-b border-black/5" 
-          style={{ backgroundColor: cardBg || '#FFFFFF', borderRadius: 'inherit' }} 
+          style={{ backgroundColor: cardBg || 'var(--bg-card)', borderRadius: 'inherit' }} 
         />
         
         <AnimatePresence mode="popLayout" initial={false}>
@@ -960,7 +961,7 @@ export default function App() {
               }
             }}
             style={{ 
-              backgroundColor: cardBg || '#FFFFFF',
+              backgroundColor: cardBg || 'var(--bg-card)',
               borderRadius: 'inherit'
             }}
             className="flex flex-col flex-1 h-full w-full relative z-10"
